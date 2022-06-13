@@ -12,7 +12,7 @@ from telemetry_orchestrator.server.applications import nifi_application_configs
 
 logger = logging.getLogger(__name__)
 
-def process_metric(metric: MetricSchema, nifi: NiFiClient):
+def process_metric(metric: MetricSchema, metric_id: str, nifi: NiFiClient):
     """
     Process Metric
     """
@@ -23,11 +23,25 @@ def process_metric(metric: MetricSchema, nifi: NiFiClient):
     # Renew access token for NiFi API
     nifi.login()
     arguments = nifi_application_configs[
-        "MetricSource"](metric)
+        "MetricSource"](metric, metric_id)
     nifi.instantiate_flow_from_metric(
-        metric, "MetricSource", arguments)
+        metric, metric_id, "MetricSource", arguments)
 
-def unprocess_metric(metric: MetricSchema, nifi: NiFiClient):
+def reprocess_metric(metric: MetricSchema, metric_id: str, nifi: NiFiClient):
+    """
+    Reprocess Metric
+    """
+    logger.info("Reprocessing metric with name %s" % (
+        metric.metricname))
+    logger.info(
+        "Updating '{0}'...".format(metric.metricname))
+    # Renew access token for NiFi API
+    nifi.login()
+    arguments = nifi_application_configs[
+        "MetricSource"](metric, metric_id)
+    nifi.update_flow_from_metric(metric, metric_id, arguments)
+
+def unprocess_metric(metric: MetricSchema, metric_id: str, nifi: NiFiClient):
     """
     Unprocess Metric
     """
@@ -37,4 +51,4 @@ def unprocess_metric(metric: MetricSchema, nifi: NiFiClient):
         "Deleting '{0}'...".format(metric.metricname))
     # Renew access token for NiFi API
     nifi.login()
-    nifi.delete_flow_from_metric(metric)
+    nifi.delete_flow_from_metric(metric, metric_id)

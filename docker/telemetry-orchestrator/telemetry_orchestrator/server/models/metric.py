@@ -5,7 +5,7 @@ from pydantic import BaseModel, Field
 
 class MetricSchema(BaseModel):
     metricname: str = Field(...)
-    labels: Dict[str, Any] = Field(...)
+    labels: Optional[Dict[str, Any]] = Field(...)
     interval: int = Field(...)
     description: str = Field(...)
 
@@ -15,13 +15,12 @@ class MetricSchema(BaseModel):
                 "metricname": "up",
                 "labels": {'instance': 'node-exporter:9100', 'job': 'node'},
                 "interval": 10000,
-                "description": "UP metric",
+                "description": "UP metric within node-exporter instance",
             }
         }
 
 
 class UpdateMetricModel(BaseModel):
-    metricname: Optional[str]
     labels: Optional[Dict[str, Any]]
     interval: Optional[int]
     description: Optional[str]
@@ -29,10 +28,9 @@ class UpdateMetricModel(BaseModel):
     class Config:
         schema_extra = {
             "example": {
-                "metricname": "up",
-                "labels": {'instance': 'node-exporter:9100', 'job': 'node'},
-                "interval": 10000,
-                "description": "UP metric",
+                "labels": {'instance': 'localhost:9090', 'job': 'prometheus'},
+                "interval": 5000,
+                "description": "UP metric within Prometheus instance",
             }
         }
 

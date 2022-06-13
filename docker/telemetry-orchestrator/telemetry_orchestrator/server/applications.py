@@ -26,7 +26,7 @@ def _getQueryLabels(expression: dict) -> str:
     return ",".join(labels)
 
 
-def config_metric_source(metric: MetricSchema) -> dict:
+def config_metric_source(metric: MetricSchema, metric_id: str) -> dict:
     """
     Builds configuration arguments for MetricSource application (NiFi)
     """
@@ -39,15 +39,19 @@ def config_metric_source(metric: MetricSchema) -> dict:
 
     # Build URL based on optional expression
     prometheus_request = ""
-    labels = _getQueryLabels(metric.labels)
-    prometheus_request = (
-         source_prom_endpoint +
-        "?query=" + source_metric +
-        "{" + labels + "}")
+    if metric.labels:
+        labels = _getQueryLabels(metric.labels)
+        prometheus_request = (
+            source_prom_endpoint +
+            "?query=" + source_metric +
+            "{" + labels + "}")
+    else:
+        prometheus_request = (source_prom_endpoint 
+            + "?query=" + source_metric)        
 
     # Generation of topic ID from the metric hash and its own labels
-    raw_topic_id = metric.metricname+labels
-    topic_id = hashlib.md5(raw_topic_id.encode("utf-8")).hexdigest()
+    # raw_topic_id = metric.metricname+labels
+    topic_id = metric_id # hashlib.md5(raw_topic_id.encode("utf-8")).hexdigest()
 
     # Collect variables for MetricSource
     # Sink Kafka topic
@@ -62,6 +66,8 @@ def config_metric_source(metric: MetricSchema) -> dict:
         "sink_broker_url": sink_broker_url,
         "sink_topic": sink_topic_name
     }
+    logger.info(
+        "CHACHO '{0}'...".format(arguments))
     return arguments
 
 nifi_application_configs = {
