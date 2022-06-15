@@ -58,7 +58,6 @@ class NiFiClient(object):
             + nifi_user.access_status.identity
         )
 
-
     def upload_template(self, template_path: str) -> TemplateEntity:
         """
         Uploads template to root process group

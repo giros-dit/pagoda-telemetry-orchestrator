@@ -1,10 +1,11 @@
 import motor.motor_asyncio
+import os
 from bson.objectid import ObjectId
 
 
-MONGO_DETAILS = "mongodb://mongo-db:27017"
+MONGO_URL = os.getenv("MONGO_URL")
 
-client = motor.motor_asyncio.AsyncIOMotorClient(MONGO_DETAILS)
+client = motor.motor_asyncio.AsyncIOMotorClient(MONGO_URL)
 
 database = client.metrics
 

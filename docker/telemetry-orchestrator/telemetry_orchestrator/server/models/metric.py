@@ -1,9 +1,9 @@
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, List, Union
 
 from pydantic import BaseModel, Field
 
 
-class MetricSchema(BaseModel):
+class MetricModel(BaseModel):
     metricname: str = Field(...)
     labels: Optional[Dict[str, Any]] = Field(...)
     interval: int = Field(...)
@@ -35,17 +35,7 @@ class UpdateMetricModel(BaseModel):
         }
 
 
-def ResponseModel(data, message):
-    return {
-        "data": [data],
-        "code": 200,
-        "message": message,
-    }
-
-
-def ErrorResponseModel(error, code, message):
-    return {
-        "error": error, 
-        "code": code, 
-        "message": message
-    }
+class ResponseModel(BaseModel):
+    data: Union[List[Dict[str, Any]],Dict[str, Any], str] = Field(...)
+    code: int = Field(default=200)
+    message: str = Field(...)  

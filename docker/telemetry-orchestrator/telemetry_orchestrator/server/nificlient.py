@@ -15,8 +15,7 @@ from nipyapi.nifi.models.process_group_flow_entity import \
     ProcessGroupFlowEntity
 from nipyapi.nifi.models.template_entity import TemplateEntity
 from telemetry_orchestrator.server.models.metric import (
-    MetricSchema,
-    # UpdateMetricModel,
+    MetricModel
 )
 
 logger = logging.getLogger(__name__)
@@ -103,11 +102,6 @@ class NiFiClient(object):
              identifier=pg.id, identifier_type='name', greedy=True)
         nifi_params.delete_parameter_context(original_context, refresh=True)
         new_context = self.set_parameter_context(pg, params)
-        # new_context = nifi_params.create_parameter_context(
-        #    pg.id, parameters=param_entities)
-        # new_context = nifi_params.upsert_parameter_to_context(
-        #    original_context, param_entities)
-        # new_context = nifi_params.update_parameter_context(original_context)
         nifi_params.assign_context_to_process_group(pg, new_context.id)
         return new_context
 
@@ -123,9 +117,9 @@ class NiFiClient(object):
         return nipyapi.canvas.nipyapi.canvas.create_controller(
             pg, dto, name)
 
-    def delete_flow_from_metric(self, metric: MetricSchema, metric_id: str):
+    def delete_flow_from_metric(self, metric: MetricModel, metric_id: str):
         """
-        Delete MetricSchema flow.
+        Delete MetricModel flow.
         """
         # Stop process group
         metric_pg = self.stop_flow_from_metric(metric, metric_id)
@@ -141,15 +135,15 @@ class NiFiClient(object):
                         controller, False, True)
         # Delete Metric PG
         nipyapi.canvas.delete_process_group(metric_pg, True)
-        pg_name = metric.metricname+":"+metric_id # self.processgroup_name(metric)
+        pg_name = metric.metricname+":"+metric_id 
         logger.debug("'{0}' flow deleted in NiFi.".format(pg_name))
 
-    def update_flow_from_metric(self, newmetric: MetricSchema,
+    def update_flow_from_metric(self, newmetric: MetricModel,
                                 metric_id: str, 
                                 args: dict) -> ProcessGroupEntity:
         """
         Stops flow, updates variables and re-starts flow
-        for a given MetricSchema.
+        for a given MetricModel.
         """
         # Stop process group
         metric_pg = self.stop_flow_from_metric(newmetric, metric_id)
@@ -187,8 +181,7 @@ class NiFiClient(object):
 
         # Restart and schedule PG
         self.start_flow_from_metric(newmetric, metric_id)
-        pg_name = newmetric.metricname+":"+metric_id # self.processgroup_name(newmetric)
-        # nipyapi.canvas.schedule_process_group(metric_pg.id, True)
+        pg_name = newmetric.metricname+":"+metric_id 
         logger.debug(
             "'{0}' flow updated and scheduled in NiFi.".format(pg_name))
 
@@ -281,13 +274,13 @@ class NiFiClient(object):
         nipyapi.canvas.delete_process_group(exporter_pg, True)
         logger.info("'{0}' flow deleted in NiFi.".format(exporter_pg.id))
 
-    def deploy_flow_from_metric(self, metric: MetricSchema, 
+    def deploy_flow_from_metric(self, metric: MetricModel, 
                                 metric_id: str,
                                 application_name: str,
                                 args: dict) -> ProcessGroupEntity:
         """
         Deploys a NiFi template
-        from a passed MetricSchema model.
+        from a passed MetricModel model.
         """
         # Get root PG
         root_pg = nipyapi.canvas.get_process_group("root")
@@ -295,7 +288,7 @@ class NiFiClient(object):
         location_x = randrange(0, 4000)
         location_y = randrange(0, 4000)
         location = (location_x, location_y)
-        pg_name = metric.metricname+":"+metric_id # self.processgroup_name(metric)
+        pg_name = metric.metricname+":"+metric_id 
         metric_pg = nipyapi.canvas.create_process_group(
             root_pg, pg_name, location
         )
@@ -328,30 +321,30 @@ class NiFiClient(object):
         logger.debug("'{0}' flow deployed in NiFi.".format(pg_name))
         return metric_pg
 
-    def instantiate_flow_from_metric(self, metric: MetricSchema, 
+    def instantiate_flow_from_metric(self, metric: MetricModel, 
                                      metric_id: str,
                                      application_name: str,
                                      args: dict) -> ProcessGroupEntity:
         """
-        Deploys and starts NiFi template given a MetricSchema.
+        Deploys and starts NiFi template given a MetricModel.
         """
         metric_pg = self.deploy_flow_from_metric(
             metric, metric_id, application_name, args)
         # Schedule PG
         nipyapi.canvas.schedule_process_group(metric_pg.id, True)
-        pg_name = metric.metricname+":"+metric_id # self.processgroup_name(metric)
+        pg_name = metric.metricname+":"+metric_id 
         logger.debug(
             "'{0}' flow scheduled in NiFi.".format(pg_name))
         return metric_pg   
 
     def start_flow_from_metric(self, 
-                               metric: MetricSchema,
+                               metric: MetricModel,
                                metric_id: str) -> ProcessGroupEntity:
         """
-        Starts NiFi flow given a MetricSchema.
+        Starts NiFi flow given a MetricModel.
         """
         # Schedule PG
-        pg_name = metric.metricname+":"+metric_id # self.processgroup_name(metric)
+        pg_name = metric.metricname+":"+metric_id 
         metric_pg = nipyapi.canvas.get_process_group(pg_name)
         nipyapi.canvas.schedule_process_group(metric_pg.id, True)
         logger.debug(
@@ -359,12 +352,12 @@ class NiFiClient(object):
         return metric_pg
 
     def stop_flow_from_metric(self, 
-                              metric: MetricSchema, 
+                              metric: MetricModel, 
                               metric_id: str) -> ProcessGroupEntity:
         """
-        Stop NiFi flow (Process Group) from MetricSchema.
+        Stop NiFi flow (Process Group) from MetricModel.
         """
-        pg_name = metric.metricname+":"+metric_id # self.processgroup_name(metric)
+        pg_name = metric.metricname+":"+metric_id
         metric_pg = nipyapi.canvas.get_process_group(pg_name)
         nipyapi.canvas.schedule_process_group(metric_pg.id, False)
         logger.debug(
@@ -408,9 +401,9 @@ class NiFiClient(object):
             if expression in cs.type:
                 return cs
 
-    def get_pg_from_metric(self, metric: MetricSchema) -> ProcessGroupEntity:
+    def get_pg_from_metric(self, metric: MetricModel) -> ProcessGroupEntity:
         """
-        Get NiFi flow (Process Group) from MetricSchema.
+        Get NiFi flow (Process Group) from MetricModel.
         """
         pg_name = self.processgroup_name(metric)
         return nipyapi.canvas.get_process_group(pg_name)
@@ -450,7 +443,12 @@ class NiFiClient(object):
             root_pg.id, template_path)
         return template
 
-    def processgroup_name(self, metric: MetricSchema) -> str:
+    def processgroup_name(self, metric: MetricModel) -> str:
+        """
+        DEPRECATED:
+        Generation of PG name from the hash composed of the metric along 
+        with its own tags
+        """
         labels = self._getQueryLabels(metric.labels)
         raw_pg_name = metric.metricname+labels
         pg_name = metric.metricname+":"+hashlib.md5(

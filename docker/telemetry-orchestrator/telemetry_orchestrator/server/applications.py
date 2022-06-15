@@ -1,17 +1,21 @@
 from curses import raw
-import json
-import logging
 from urllib.parse import urlparse
 import hashlib
-
+import json
+import os
+import logging
 
 from telemetry_orchestrator.server.models.metric import (
-    ErrorResponseModel,
-    ResponseModel,
-    MetricSchema,
-    UpdateMetricModel,
+    MetricModel
 )
+
 logger = logging.getLogger(__name__)
+
+PROMETHEUS_URI = os.getenv("PROMETHEUS_URI")
+
+KAFKA_ENDPOINT = os.getenv("KAFKA_ENDPOINT")
+
+SITE_ID = os.getenv("SITE_ID")
 
 
 def _getQueryLabels(expression: dict) -> str:
@@ -26,7 +30,7 @@ def _getQueryLabels(expression: dict) -> str:
     return ",".join(labels)
 
 
-def config_metric_source(metric: MetricSchema, metric_id: str) -> dict:
+def config_metric_source(metric: MetricModel, metric_id: str) -> dict:
     """
     Builds configuration arguments for MetricSource application (NiFi)
     """
@@ -35,7 +39,7 @@ def config_metric_source(metric: MetricSchema, metric_id: str) -> dict:
     source_metric = metric.metricname
 
     # Get source Prometheus
-    source_prom_endpoint = "http://prometheus:9090/api/v1/query"
+    source_prom_endpoint = str(PROMETHEUS_URI)
 
     # Build URL based on optional expression
     prometheus_request = ""
@@ -46,19 +50,23 @@ def config_metric_source(metric: MetricSchema, metric_id: str) -> dict:
             "?query=" + source_metric +
             "{" + labels + "}")
     else:
-        prometheus_request = (source_prom_endpoint 
-            + "?query=" + source_metric)        
+        prometheus_request = (source_prom_endpoint + "?query=" + source_metric)        
 
-    # Generation of topic ID from the metric hash and its own labels
+    # DEPRECATED:
+    # Generation of topic ID from the hash composed of the metric along with 
+    # its own tags
     # raw_topic_id = metric.metricname+labels
-    topic_id = metric_id # hashlib.md5(raw_topic_id.encode("utf-8")).hexdigest()
+    # topic_id = hashlib.md5(raw_topic_id.encode("utf-8")).hexdigest()
+    
+    # Topic ID = Metric's Object ID within MongoDB
+    topic_id = metric_id 
 
     # Collect variables for MetricSource
     # Sink Kafka topic
-    sink_topic_name = metric.metricname+"-"+topic_id
-    print(sink_topic_name)
+    sink_topic_name = str(SITE_ID)+"-"+metric.metricname+"-"+topic_id
+
     # Endpoint for source Kafka broker
-    sink_broker_url = "kafka:9092"
+    sink_broker_url = str(KAFKA_ENDPOINT)
 
     arguments = {
         "interval": metric.interval,
@@ -66,9 +74,8 @@ def config_metric_source(metric: MetricSchema, metric_id: str) -> dict:
         "sink_broker_url": sink_broker_url,
         "sink_topic": sink_topic_name
     }
-    logger.info(
-        "CHACHO '{0}'...".format(arguments))
     return arguments
+
 
 nifi_application_configs = {
     "MetricSource": config_metric_source,
