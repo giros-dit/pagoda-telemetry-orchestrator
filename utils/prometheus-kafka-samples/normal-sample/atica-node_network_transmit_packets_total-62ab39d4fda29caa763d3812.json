@@ -1,0 +1,14 @@
+[
+    {
+        "metric": {
+            "__name__": "node_network_transmit_packets_total",
+            "device": "eth0",
+            "instance": "node-exporter:9100",
+            "job": "node"
+        },
+        "value": [
+            1655388764.867,
+            "108"
+        ]
+    }
+]

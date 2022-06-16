@@ -1,0 +1,30 @@
+{
+    "prometheus:metrics": {
+        "metric": [
+            {
+                "label-set-id": "1183814231",
+                "labels": {
+                    "label": [
+                        {
+                            "name": "instance",
+                            "value": "node-exporter:9100"
+                        },
+                        {
+                            "name": "job",
+                            "value": "node"
+                        },
+                        {
+                            "name": "device",
+                            "value": "eth0"
+                        }
+                    ]
+                },
+                "metric-points": {
+                    "timestamp": "1655385755.556",
+                    "value": "393"
+                },
+                "name": "node_network_transmit_packets_total"
+            }
+        ]
+    }
+}
