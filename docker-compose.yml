@@ -17,13 +17,15 @@ services:
       - ./docker/app-manager/app_manager:/opt/app-manager/app_manager
     depends_on:
       - nifi
-  http-dummy-server:
+  ndac-http-dummy-server:
     image: vimagick/json-server
+    hostname: ndac-http-dummy-server
+    container_name: ndac-http-dummy-server
     command: -H 0.0.0.0 -p 3000 -w access-point-sims.json --routes routes.json
     ports:
       - "3000:3000"
     volumes:
-      - ./docker/http-dummy-server/ndac-responses:/data
+      - ./docker/ndac-http-dummy-server/ndac-responses:/data
     restart: always
   kafka:
     image: wurstmeister/kafka:latest
