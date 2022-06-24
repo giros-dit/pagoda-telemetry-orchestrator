@@ -1,0 +1,42 @@
+{
+    "access-point-sims": {
+        "status": {
+        "status_code": "SUCCESS",
+        "status_description": {
+            "description_code": "NOT_SPECIFIED",
+            "description": "Successful fetch of subscriptions"   }
+        },
+        "access_point_imsi_details": [
+        {
+            "access_point_hw_id": "ENBV-10-12::NOKIA::NOKIA-NWI3",
+            "imsi_details": [
+            {
+                "imsi": "565462141384518",
+                "icc_id": "8900099100000020191",
+                "ue_report_timestamp": "2020-02-25T10:48:34.859Z",
+                "imsi_alias": "test1"       },
+            {
+                "imsi": "565462141384519",
+                "icc_id": "8900099100000020192",
+                "ue_report_timestamp": "2020-02-25T11:48:34.859Z",
+                "imsi_alias": "test2"       }
+            ]
+        },
+        {
+            "access_point_hw_id": "ENBV-10-12::NOKIA::NOKIA-NWI4",
+            "imsi_details": [
+            {
+                "imsi": "565462141384518",
+                "icc_id": "8900099100000020193",
+                "ue_report_timestamp": "2020-02-25T10:48:34.859Z",
+                "imsi_alias": "test3"       },
+            {
+                "imsi": "565462141384520",
+                "icc_id": "8900099100000020194",
+                "ue_report_timestamp": "2020-02-25T12:48:34.859Z",
+                "imsi_alias": "test4"       }
+            ]
+        }
+        ]
+    }
+}
