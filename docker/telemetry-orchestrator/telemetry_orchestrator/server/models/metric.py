@@ -5,7 +5,8 @@ from pydantic import BaseModel, Field
 
 class MetricModel(BaseModel):
     metricname: str = Field(...)
-    labels: Optional[Dict[str, Any]] = Field(...)
+    labels: Optional[Dict[str, Any]] = None
+    operation: Optional[str] = None
     interval: int = Field(...)
     description: str = Field(...)
 
@@ -14,7 +15,7 @@ class MetricModel(BaseModel):
             "example": {
                 "metricname": "node_network_transmit_packets_total",
                 "labels": {
-                    'job': 'node'
+                    'job': 'node-exporter'
                 },
                 "interval": 10000,
                 "description": 
@@ -34,7 +35,7 @@ class UpdateMetricModel(BaseModel):
                 "labels": {
                     'device': 'eth0',
                     'instance': 'node-exporter:9100', 
-                    'job': 'node'
+                    'job': 'node-exporter'
                 },
                 "interval": 5000
             }
@@ -57,7 +58,7 @@ class AddMetricResponseModel(ResponseModel):
                     "id": "62aad459fb672f7a0a80e0cf",
                     "metricname": "node_network_transmit_packets_total",
                     "labels": {
-                        "job": "node"
+                        "job": "node-exporter"
                     },
                     "interval": 10000,
                     "description": 
@@ -80,7 +81,7 @@ class GetMetricResponseModel(ResponseModel):
                     "metricname": "node_network_transmit_packets_total",
                     "labels": {
                         "instance": "node-exporter:9100",
-                        "job": "node"
+                        "job": "node-exporter"
                     },
                     "interval": 5000,
                     "description": 
@@ -104,7 +105,7 @@ class GetMetricsResponseModel(ResponseModel):
                         "metricname": "up",
                         "labels": {
                             "instance": "node-exporter:9100",
-                            "job": "node"
+                            "job": "node-exporter"
                         },
                         "interval": 10000,
                         "description": 
@@ -115,7 +116,7 @@ class GetMetricsResponseModel(ResponseModel):
                         "metricname": "node_network_transmit_packets_total",
                         "labels": {
                             "instance": "node-exporter:9100",
-                            "job": "node"
+                            "job": "node-exporter"
                         },
                         "interval": 5000,
                         "description": 

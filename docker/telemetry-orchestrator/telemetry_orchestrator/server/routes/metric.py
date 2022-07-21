@@ -37,6 +37,7 @@ router = APIRouter()
 
 logger = logging.getLogger(__name__)
 
+
 # NiFi
 NIFI_URI = os.getenv("NIFI_URI", "https://nifi:8443/nifi-api")
 NIFI_USERNAME = os.getenv("NIFI_USERNAME")
@@ -48,6 +49,7 @@ nifi = NiFiClient(username=NIFI_USERNAME,
                   url=NIFI_URI)
 
 
+'''
 @router.on_event("startup")
 async def startup_event():
     # Check NiFi REST API is up
@@ -61,9 +63,10 @@ async def startup_event():
                            "Retrying after 10 seconds...")
             time.sleep(10)
     # Deploy DistributedMapCacheServer in root PG
-    # nifi.deploy_distributed_map_cache_server()
+    nifi.deploy_distributed_map_cache_server()
     # Deploy exporter-service PG in root PG
-    # nifi.deploy_exporter_service()
+    nifi.deploy_exporter_service()
+'''
 
 
 @router.post("/", response_description="Metric added into the database", 
@@ -97,7 +100,7 @@ async def get_metric_data(id):
         return ResponseModel(
             data=metric, message="Metric data retrieved successfully.")
     raise HTTPException(
-        status_code=404, detail="An error occurred. "+
+        status_code=404, detail="An error occurred. " +
         "Metric with ID {0} doesn't exist.".format(id))
 
 

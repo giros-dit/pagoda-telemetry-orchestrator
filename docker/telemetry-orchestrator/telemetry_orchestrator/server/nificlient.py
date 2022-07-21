@@ -17,6 +17,9 @@ from nipyapi.nifi.models.template_entity import TemplateEntity
 from telemetry_orchestrator.server.models.metric import (
     MetricModel
 )
+from telemetry_orchestrator.server.models.ue_location import (
+    UELocationModel
+)
 
 logger = logging.getLogger(__name__)
 
@@ -138,6 +141,27 @@ class NiFiClient(object):
         pg_name = metric.metricname+":"+metric_id 
         logger.debug("'{0}' flow deleted in NiFi.".format(pg_name))
 
+    def delete_flow_from_ue_location(self, ue_location: UELocationModel, ue_location_id: str):
+        """
+        Delete UELocationModel flow.
+        """
+        # Stop process group
+        ue_location_pg = self.stop_flow_from_ue_location(ue_location, ue_location_id)
+        # Disable controller services (if any)
+        controllers = nipyapi.canvas.list_all_controllers(
+            ue_location_pg.id, False)
+        if controllers:
+            for controller in controllers:
+                if controller.status.run_status == 'ENABLED':
+                    logger.debug("Disabling controller %s ..."
+                                 % controller.component.name)
+                    nipyapi.canvas.schedule_controller(
+                        controller, False, True)
+        # Delete UE Location PG
+        nipyapi.canvas.delete_process_group(ue_location_pg, True)
+        pg_name = "ue_location"+":"+ue_location_id 
+        logger.debug("'{0}' flow deleted in NiFi.".format(pg_name))
+
     def update_flow_from_metric(self, newmetric: MetricModel,
                                 metric_id: str, 
                                 args: dict) -> ProcessGroupEntity:
@@ -186,6 +210,55 @@ class NiFiClient(object):
             "'{0}' flow updated and scheduled in NiFi.".format(pg_name))
 
         return metric_pg   
+
+    def update_flow_from_ue_location(self, new_ue_location: UELocationModel,
+                                ue_location_id: str, 
+                                args: dict) -> ProcessGroupEntity:
+        """
+        Stops flow, updates variables and re-starts flow
+        for a given UELocationModel.
+        """
+        # Stop process group
+        ue_location_pg = self.stop_flow_from_ue_location(new_ue_location, ue_location_id)
+        # Disable controller services (if any)
+        controllers = nipyapi.canvas.list_all_controllers(
+            ue_location_pg.id, False)
+        if controllers:
+            for controller in controllers:
+                if controller.status.run_status == 'ENABLED':
+                    logger.debug("Disabling controller %s ..."
+                                 % controller.component.name)
+                    nipyapi.canvas.schedule_controller(
+                        controller, False, True)
+        
+        logger.debug("Update with arguments %s" % args)
+        # Set Parameter Context for UE Location PG
+        self.update_parameter_context(ue_location_pg, args)
+
+        # Hack to support scheduling for a given processor
+        ue_location_pg_flow = nipyapi.canvas.get_flow(
+            ue_location_pg.id).process_group_flow
+        if "interval" in args:
+            self.set_polling_interval(ue_location_pg_flow, args["interval"])
+        # Enable controller services (if any)
+        controllers = nipyapi.canvas.list_all_controllers(ue_location_pg.id, False)
+        if controllers:
+            # Enable controller services
+            # Start with the registry controller
+            for controller in controllers:
+                logger.debug(
+                    "Enabling controller %s ..."
+                    % controller.component.name)
+                if controller.status.run_status != 'ENABLED':
+                    nipyapi.canvas.schedule_controller(controller, True)
+
+        # Restart and schedule PG
+        self.start_flow_from_ue_location(new_ue_location, ue_location_id)
+        pg_name = "ue_location"+":"+ue_location_id 
+        logger.debug(
+            "'{0}' flow updated and scheduled in NiFi.".format(pg_name))
+
+        return ue_location_pg   
 
     def deploy_distributed_map_cache_server(
             self, pg: ProcessGroupEntity = None,
@@ -321,6 +394,56 @@ class NiFiClient(object):
         logger.debug("'{0}' flow deployed in NiFi.".format(pg_name))
         return metric_pg
 
+    def deploy_flow_from_ue_location(self, ue_location: UELocationModel, 
+                                ue_location_id: str,
+                                application_name: str,
+                                args: dict) -> ProcessGroupEntity:
+        """
+        Deploys a NiFi template
+        from a passed UELocationModel model.
+        """
+        # Get root PG
+        root_pg = nipyapi.canvas.get_process_group("root")
+        # Place the PG in a random location in canvas
+        location_x = randrange(0, 4000)
+        location_y = randrange(0, 4000)
+        location = (location_x, location_y)
+        pg_name = "ue_location"+":"+ue_location_id 
+        ue_location_pg = nipyapi.canvas.create_process_group(
+            root_pg, pg_name, location
+        )
+        logger.info("CHACHO PG id %s" % ue_location_pg.id)
+        logger.debug("Deploy with arguments %s" % args)
+        # Set Parameter Context for UELocation PG
+        self.set_parameter_context(ue_location_pg, args)
+
+        # Deploy UELocation template
+        ue_location_template = nipyapi.templates.get_template_by_name(
+            application_name)
+        ue_location_pg_flow = nipyapi.templates.deploy_template(
+            ue_location_pg.id,
+            ue_location_template.id,
+            -250, 200)
+        # Enable controller services (if any)
+        controllers = nipyapi.canvas.list_all_controllers(ue_location_pg.id, False)
+        if controllers:
+            # Enable controller services
+            # Start with the registry controller
+            for controller in controllers:
+                logger.debug(
+                    "Enabling controller %s ..."
+                    % controller.component.name)
+                if controller.status.run_status != 'ENABLED':
+                    nipyapi.canvas.schedule_controller(controller, True)
+        # Hack to support scheduling for a given processor
+        if "interval" in args:
+            logger.info("CHACHO args %s" % args["interval"])
+            self.set_polling_interval(ue_location_pg_flow, args["interval"])
+
+        logger.debug("'{0}' flow deployed in NiFi.".format(pg_name))
+        return ue_location_pg
+
+
     def instantiate_flow_from_metric(self, metric: MetricModel, 
                                      metric_id: str,
                                      application_name: str,
@@ -337,6 +460,22 @@ class NiFiClient(object):
             "'{0}' flow scheduled in NiFi.".format(pg_name))
         return metric_pg   
 
+    def instantiate_flow_from_ue_location(self, ue_location: UELocationModel, 
+                                     ue_location_id: str,
+                                     application_name: str,
+                                     args: dict) -> ProcessGroupEntity:
+        """
+        Deploys and starts NiFi template given a UELocationModel.
+        """
+        ue_location_pg = self.deploy_flow_from_ue_location(
+            ue_location, ue_location_id, application_name, args)
+        # Schedule PG
+        nipyapi.canvas.schedule_process_group(ue_location_pg.id, True)
+        pg_name = "ue_location"+":"+ue_location_id 
+        logger.debug(
+            "'{0}' flow scheduled in NiFi.".format(pg_name))
+        return ue_location_pg 
+
     def start_flow_from_metric(self, 
                                metric: MetricModel,
                                metric_id: str) -> ProcessGroupEntity:
@@ -351,6 +490,20 @@ class NiFiClient(object):
             "'{0}' flow scheduled in NiFi.".format(pg_name))
         return metric_pg
 
+    def start_flow_from_ue_location(self, 
+                               ue_location: UELocationModel,
+                               ue_location_id: str) -> ProcessGroupEntity:
+        """
+        Starts NiFi flow given a UELocationModel.
+        """
+        # Schedule PG
+        pg_name = "ue_location"+":"+ue_location_id 
+        ue_location_pg = nipyapi.canvas.get_process_group(pg_name)
+        nipyapi.canvas.schedule_process_group(ue_location_pg.id, True)
+        logger.debug(
+            "'{0}' flow scheduled in NiFi.".format(pg_name))
+        return ue_location_pg
+
     def stop_flow_from_metric(self, 
                               metric: MetricModel, 
                               metric_id: str) -> ProcessGroupEntity:
@@ -363,6 +516,20 @@ class NiFiClient(object):
         logger.debug(
             "'{0}' flow unscheduled in NiFi.".format(pg_name))
         return metric_pg
+
+
+    def stop_flow_from_ue_location(self, 
+                              ue_location: UELocationModel, 
+                              ue_location_id: str) -> ProcessGroupEntity:
+        """
+        Stop NiFi flow (Process Group) from UELocationModel.
+        """
+        pg_name = "ue_location"+":"+ue_location_id
+        ue_location_pg = nipyapi.canvas.get_process_group(pg_name)
+        nipyapi.canvas.schedule_process_group(ue_location_pg.id, False)
+        logger.debug(
+            "'{0}' flow unscheduled in NiFi.".format(pg_name))
+        return ue_location_pg
 
     def disable_controller_service(
             self,
@@ -408,6 +575,13 @@ class NiFiClient(object):
         pg_name = self.processgroup_name(metric)
         return nipyapi.canvas.get_process_group(pg_name)
 
+    def get_pg_from_ue_location(self, ue_location: UELocationModel) -> ProcessGroupEntity:
+        """
+        Get NiFi flow (Process Group) from UELocationModel.
+        """
+        pg_name = self.processgroup_name(ue_location)
+        return nipyapi.canvas.get_process_group(pg_name)
+
     def get_root_pg(self) -> ProcessGroupEntity:
         """
         Get the root Process Group"
@@ -421,7 +595,9 @@ class NiFiClient(object):
         # so far rely on "Polling" string
         http_ps = None
         for ps in pg_flow.flow.processors:
+            logger.info("CHACHO 1 %s" % interval)
             if "Polling" in ps.status.name:
+                logger.info("CHACHO 2 %s" % interval)
                 logger.debug("Updating %s processor" % ps.status.name)
                 http_ps = ps
                 break

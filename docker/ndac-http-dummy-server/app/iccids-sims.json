@@ -1,0 +1,86 @@
+{
+  "status": {
+    "status_code": "SUCCESS",
+    "status_description": {
+      "description_code": "NOT_SPECIFIED",
+      "description": "Successful fetch of subscriptions"
+    }
+  },
+  "email_id": "site24@customernetwork.com",
+  "subsc": [
+    {
+      "imsi": "565462141384518",
+      "imsi_alias": "UE44",
+      "icc_id": "89900123450004598765",
+      "imei": "990000862471854",
+      "static_ip": "10.20.1.2",
+      "qos": "QCI6",
+      "apn_id": "DEFAULTAPN:2acad255-5639-41f6-76e9-6d31d0257b3b",
+      "apn_name": "internet",
+      "qos_group_id": "DEFAULTQOS:2acad255-5639-41f6-76e9-6d31d0257b3b",
+      "qos_profile_name": "internet_DEFAULT",
+      "private_network_details": [
+        {
+          "nhg_id": "02f79322-50cb-4e69-68b7-82b8acc0ec15",
+          "status": "ACTIVE",
+          "status_description": "string",
+          "ue_status": "UE_CONNECTED",
+          "ue_ip": "10.20.1.2",
+          "ue_report_timestamp": "2020-03-02T01:45:41.473Z",
+          "nhg_alias": "Network1",
+          "feature_status": {
+            "imsi": "565462141384518",
+            "static_ip_status": "IN_SYNC",
+            "qos_status": "IN_SYNC",
+            "imei_status": "IN_SYNC",
+            "multiple_apn_status": "IN_SYNC"
+          }
+        }
+      ],
+      "last_known_access_point": {
+        "access_point_hw_id": "ENBV-10-12::NOKIA::NOKIA-NWI2",
+        "ue_ap_report_timestamp": "2020-02-25T10:48:34.859Z"
+      }
+    },
+    {
+      "imsi": "565462141384518",
+      "imsi_alias": "UE44",
+      "icc_id": "89900123450004598766",
+      "imei": "990000862471854",
+      "static_ip": "10.20.1.3",
+      "qos": "QCI6",
+      "apn_id": "DEFAULTAPN:2acad255-5639-41f6-76e9-6d31d0257b3b",
+      "apn_name": "internet",
+      "qos_group_id": "DEFAULTQOS:2acad255-5639-41f6-76e9-6d31d0257b3b",
+      "qos_profile_name": "internet_DEFAULT",
+      "private_network_details": [
+        {
+          "nhg_id": "02f79322-50cb-4e69-68b7-82b8acc0ec15",
+          "status": "ACTIVE",
+          "status_description": "string",
+          "ue_status": "UE_CONNECTED",
+          "ue_ip": "10.20.1.3",
+          "ue_report_timestamp": "2020-03-02T01:45:41.473Z",
+          "nhg_alias": "Network1",
+          "feature_status": {
+            "imsi": "565462141384518",
+            "static_ip_status": "IN_SYNC",
+            "qos_status": "IN_SYNC",
+            "imei_status": "IN_SYNC",
+            "multiple_apn_status": "IN_SYNC"
+          }
+        }
+      ],
+      "last_known_access_point": {
+        "access_point_hw_id": "ENBV-10-12::NOKIA::NOKIA-NWI3",
+        "ue_ap_report_timestamp": "2020-02-25T10:48:34.859Z"
+      }
+    }
+  ],
+  "fail_iccid": [
+    {
+      "icc_id": "565462141384522",
+      "reason": "UNKNOWN iccid"
+    }
+  ]
+}

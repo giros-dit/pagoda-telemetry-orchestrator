@@ -1,0 +1,186 @@
+version: '3'
+services:
+  alertmanager:
+    image: prom/alertmanager
+    hostname: alertmanager
+    container_name: alertmanager
+    ports:
+      - 9093:9093
+    volumes:
+      - ./docker/alertmanager/:/etc/alertmanager/
+    command:
+      - '--config.file=/etc/alertmanager/config.yml'
+      - '--storage.path=/alertmanager'
+  app-manager:
+    build:
+      context: .
+      dockerfile: ./docker/app-manager/Dockerfile
+    hostname: app-manager
+    container_name: app-manager
+    environment:
+      - APP_MANAGER_URI=${APP_MANAGER_URI}
+      - NIFI_URI=${NIFI_URI}
+      - NIFI_USERNAME=${NIFI_USERNAME}
+      - NIFI_PASSWORD=${NIFI_PASSWORD}
+    ports:
+      - "8082:8080"
+    volumes:
+      - ./docker/app-manager/app_manager:/opt/app-manager/app_manager
+    depends_on:
+      - nifi
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor
+    hostname: cadvisor
+    container_name: cadvisor
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:rw
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+    ports:
+      - 8081:8080
+  grafana:
+    image: grafana/grafana
+    hostname: grafana
+    container_name: grafana
+    user: root
+    ports:
+      - 3001:3000
+    environment:
+      - GF_SECURITY_ADMIN_USER=${GF_USER}
+      - GF_SECURITY_ADMIN_PASSWORD=${GF_PASSWORD}
+      - GF_USERS_ALLOW_SIGN_UP=${GF_USERS_ALLOW_SIGN_UP}
+    volumes:
+    #  - ./docker/grafana/grafana_data:/var/lib/grafana
+      - ./docker/grafana/provisioning:/etc/grafana/provisioning
+    depends_on:
+      - prometheus
+  kafka:
+    image: wurstmeister/kafka:latest
+    hostname: kafka
+    container_name: kafka
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_ADVERTISED_HOST_NAME: kafka
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_PORT: 9092
+      KAFKA_LOG_DIRS: "/tmp/kafka-logs"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    depends_on:
+      - zookeeper
+    logging:
+      driver: none
+  mongo-db:
+    image: mongo:latest
+    hostname: mongo-db
+    container_name: mongo-db
+#    environment:
+#      MONGO_INITDB_ROOT_USERNAME: ${MONGO_USERNAME}
+#      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD}
+    ports:
+      - "27017:27017"
+    command: --nojournal
+#    volumes:
+#      - ./docker/mongo-db/data/db:/data/db
+#  ndac-http-dummy-server-query1:
+#    image: vimagick/json-server
+#    hostname: ndac-http-dummy-server-query1
+#    container_name: ndac-http-dummy-server-query1
+#    command: -H 0.0.0.0 -p 3000 -w access-point-sims.json --routes routes.json
+#    ports:
+#      - "3000:3000"
+#    volumes:
+#      - ./docker/ndac-http-dummy-server/ndac-responses:/data
+#    restart: always
+  ndac-http-dummy-server:
+    build:
+      context: .
+      dockerfile: ./docker/ndac-http-dummy-server/Dockerfile
+    hostname: ndac-http-dummy-server
+    container_name: ndac-http-dummy-server
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./docker/ndac-http-dummy-server/app:/app
+  nifi:
+    build:
+      context: .
+      dockerfile: ./docker/nifi/Dockerfile
+    hostname: nifi
+    container_name: nifi
+    user: root
+    environment:
+      SINGLE_USER_CREDENTIALS_USERNAME: ${NIFI_USERNAME}
+      # Must be of 12 characters min
+      SINGLE_USER_CREDENTIALS_PASSWORD: ${NIFI_PASSWORD}
+      NIFI_JVM_HEAP_INIT: 4g
+      NIFI_JVM_HEAP_MAX: 6g
+    ports:
+      - "8443:8443"
+    volumes:
+      - ./docker/nifi/drivers/jinja-templates:/jinja-templates
+      - ./docker/nifi/drivers/nars:/opt/nifi/nifi-current/extensions
+  node-exporter:
+    image: prom/node-exporter
+    hostname: node-exporter
+    container_name: node-exporter
+    ports:
+      - "9100:9100"
+    depends_on:
+      - prometheus
+  prometheus:
+    image: prom/prometheus
+    hostname: prometheus
+    container_name: prometheus
+    ports:
+      - "9099:9090"
+    volumes:
+      - ./docker/prometheus/config/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./docker/prometheus/config/server-rules.yml:/etc/prometheus/server-rules.yml
+      - ./docker/prometheus/config/container-rules.yml:/etc/prometheus/container-rules.yml
+  pushgateway:
+    image: prom/pushgateway
+    hostname: pushgateway
+    container_name: pushgateway
+    ports:
+      - "9091:9091"
+  pushgateway-tester:
+    build:
+      context: .
+      dockerfile: ./docker/pushgateway-tester/Dockerfile
+    hostname: pushgateway-tester
+    container_name: pushgateway-tester
+  telemetry-orchestrator:
+    build:
+      context: .
+      dockerfile: ./docker/telemetry-orchestrator/Dockerfile
+    hostname: telemetry-orchestrator
+    container_name: telemetry-orchestrator
+    environment:
+      - NIFI_URI=${NIFI_URI}
+      - NIFI_USERNAME=${NIFI_USERNAME}
+      - NIFI_PASSWORD=${NIFI_PASSWORD}
+      - TELEMETRY_ORCHESTRATOR_URI=${TELEMETRY_ORCHESTRATOR_URI}
+      - MONGO_URL=${MONGO_URL}
+      - PROMETHEUS_URI=${PROMETHEUS_URI}
+      - NDAC_URI_GET=${NDAC_URI_GET}
+      - NDAC_URI_POST=${NDAC_URI_POST}
+      - KAFKA_ENDPOINT=${KAFKA_ENDPOINT}
+      - SITE_ID=${SITE_ID}
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./docker/telemetry-orchestrator/telemetry_orchestrator:/opt/telemetry-orchestrator/telemetry_orchestrator
+    depends_on:
+      - nifi
+  zookeeper:
+    image: zookeeper
+    hostname: zookeeper
+    container_name: zookeeper
+    ports:
+      - "2181"
+    logging:
+      driver: none
+
