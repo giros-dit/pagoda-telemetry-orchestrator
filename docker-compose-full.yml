@@ -82,18 +82,6 @@ services:
     ports:
       - "27017:27017"
     command: --nojournal
-#    volumes:
-#      - ./docker/mongo-db/data/db:/data/db
-#  ndac-http-dummy-server-query1:
-#    image: vimagick/json-server
-#    hostname: ndac-http-dummy-server-query1
-#    container_name: ndac-http-dummy-server-query1
-#    command: -H 0.0.0.0 -p 3000 -w access-point-sims.json --routes routes.json
-#    ports:
-#      - "3000:3000"
-#    volumes:
-#      - ./docker/ndac-http-dummy-server/ndac-responses:/data
-#    restart: always
   ndac-http-dummy-server:
     build:
       context: .
