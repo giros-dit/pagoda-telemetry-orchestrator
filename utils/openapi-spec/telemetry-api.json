@@ -10,8 +10,8 @@
                 "tags": [
                     "Prometheus Metrics"
                 ],
-                "summary": "Get Metrics",
-                "operationId": "get_metrics_metric_atica__get",
+                "summary": "Get Metrics Data",
+                "operationId": "get_metrics_data_metric_atica__get",
                 "responses": {
                     "200": {
                         "description": "Metrics retrieved",
@@ -196,6 +196,158 @@
                 }
             }
         },
+        "/ue-location/": {
+            "get": {
+                "tags": [
+                    "UE Location"
+                ],
+                "summary": "Get Ue Location Interval",
+                "operationId": "get_ue_location_interval_ue_location__get",
+                "responses": {
+                    "200": {
+                        "description": "UE location retrieved",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/GetUELocationsResponseModel"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "UE Location"
+                ],
+                "summary": "Activate Ue Location",
+                "operationId": "activate_ue_location_ue_location__post",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UELocationModel"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "UE location added into the database",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AddUELocationResponseModel"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/ue-location/{id}": {
+            "put": {
+                "tags": [
+                    "UE Location"
+                ],
+                "summary": "Update Ue Location Interval",
+                "operationId": "update_ue_location_interval_ue_location__id__put",
+                "parameters": [
+                    {
+                        "required": true,
+                        "schema": {
+                            "title": "Id",
+                            "type": "string"
+                        },
+                        "name": "id",
+                        "in": "path"
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateUELocationModel"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "UE location interval updated",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/UpdateUELocationResponseModel"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "UE Location"
+                ],
+                "summary": "Desactivate Ue Location",
+                "operationId": "desactivate_ue_location_ue_location__id__delete",
+                "parameters": [
+                    {
+                        "required": true,
+                        "schema": {
+                            "title": "Id",
+                            "type": "string"
+                        },
+                        "name": "id",
+                        "in": "path"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "UE location deleted from the database",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/DeleteUELocationResponseModel"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/": {
             "get": {
                 "tags": [
@@ -245,13 +397,45 @@
                         "id": "62aad459fb672f7a0a80e0cf",
                         "metricname": "node_network_transmit_packets_total",
                         "labels": {
-                            "job": "node"
+                            "job": "node-exporter"
                         },
                         "interval": 10000,
                         "description": "Packets transmitted through network interfaces."
                     },
                     "code": 200,
                     "message": "Metric added successfully."
+                }
+            },
+            "AddUELocationResponseModel": {
+                "title": "AddUELocationResponseModel",
+                "required": [
+                    "data",
+                    "message"
+                ],
+                "type": "object",
+                "properties": {
+                    "data": {
+                        "title": "Data",
+                        "type": "object"
+                    },
+                    "code": {
+                        "title": "Code",
+                        "type": "integer",
+                        "default": 200
+                    },
+                    "message": {
+                        "title": "Message",
+                        "type": "string"
+                    }
+                },
+                "example": {
+                    "data": {
+                        "id": "62d8f4a4dc17fe14a0ddc4a5",
+                        "interval": 10000,
+                        "description": "UE location information."
+                    },
+                    "code": 200,
+                    "message": "UE location activated successfully."
                 }
             },
             "DeleteMetricResponseModel": {
@@ -282,6 +466,34 @@
                     "message": "Metric deleted successfully."
                 }
             },
+            "DeleteUELocationResponseModel": {
+                "title": "DeleteUELocationResponseModel",
+                "required": [
+                    "data",
+                    "message"
+                ],
+                "type": "object",
+                "properties": {
+                    "data": {
+                        "title": "Data",
+                        "type": "string"
+                    },
+                    "code": {
+                        "title": "Code",
+                        "type": "integer",
+                        "default": 200
+                    },
+                    "message": {
+                        "title": "Message",
+                        "type": "string"
+                    }
+                },
+                "example": {
+                    "data": "UE location desactivated.",
+                    "code": 200,
+                    "message": "UE location desactivated successfully."
+                }
+            },
             "GetMetricResponseModel": {
                 "title": "GetMetricResponseModel",
                 "required": [
@@ -310,7 +522,7 @@
                         "metricname": "node_network_transmit_packets_total",
                         "labels": {
                             "instance": "node-exporter:9100",
-                            "job": "node"
+                            "job": "node-exporter"
                         },
                         "interval": 5000,
                         "description": "Packets transmitted through network interfaces."
@@ -351,7 +563,7 @@
                             "metricname": "up",
                             "labels": {
                                 "instance": "node-exporter:9100",
-                                "job": "node"
+                                "job": "node-exporter"
                             },
                             "interval": 10000,
                             "description": "The node-exporter instance is up."
@@ -361,7 +573,7 @@
                             "metricname": "node_network_transmit_packets_total",
                             "labels": {
                                 "instance": "node-exporter:9100",
-                                "job": "node"
+                                "job": "node-exporter"
                             },
                             "interval": 5000,
                             "description": "Packets transmitted through network interfaces."
@@ -369,6 +581,43 @@
                     ],
                     "code": 200,
                     "message": "Metrics data retrieved successfully."
+                }
+            },
+            "GetUELocationsResponseModel": {
+                "title": "GetUELocationsResponseModel",
+                "required": [
+                    "data",
+                    "message"
+                ],
+                "type": "object",
+                "properties": {
+                    "data": {
+                        "title": "Data",
+                        "type": "array",
+                        "items": {
+                            "type": "object"
+                        }
+                    },
+                    "code": {
+                        "title": "Code",
+                        "type": "integer",
+                        "default": 200
+                    },
+                    "message": {
+                        "title": "Message",
+                        "type": "string"
+                    }
+                },
+                "example": {
+                    "data": [
+                        {
+                            "id": "62d8f4a4dc17fe14a0ddc4a5",
+                            "interval": 10000,
+                            "description": "UE location information."
+                        }
+                    ],
+                    "code": 200,
+                    "message": "UE location interval retrieved successfully."
                 }
             },
             "HTTPValidationError": {
@@ -388,7 +637,6 @@
                 "title": "MetricModel",
                 "required": [
                     "metricname",
-                    "labels",
                     "interval",
                     "description"
                 ],
@@ -402,6 +650,10 @@
                         "title": "Labels",
                         "type": "object"
                     },
+                    "operation": {
+                        "title": "Operation",
+                        "type": "string"
+                    },
                     "interval": {
                         "title": "Interval",
                         "type": "integer"
@@ -414,10 +666,32 @@
                 "example": {
                     "metricname": "node_network_transmit_packets_total",
                     "labels": {
-                        "job": "node"
+                        "job": "node-exporter"
                     },
                     "interval": 10000,
                     "description": "Packets transmitted through network interfaces."
+                }
+            },
+            "UELocationModel": {
+                "title": "UELocationModel",
+                "required": [
+                    "interval",
+                    "description"
+                ],
+                "type": "object",
+                "properties": {
+                    "interval": {
+                        "title": "Interval",
+                        "type": "integer"
+                    },
+                    "description": {
+                        "title": "Description",
+                        "type": "string"
+                    }
+                },
+                "example": {
+                    "interval": 10000,
+                    "description": "UE location activation."
                 }
             },
             "UpdateMetricModel": {
@@ -441,7 +715,7 @@
                     "labels": {
                         "device": "eth0",
                         "instance": "node-exporter:9100",
-                        "job": "node"
+                        "job": "node-exporter"
                     },
                     "interval": 5000
                 }
@@ -472,6 +746,56 @@
                     "data": "Metric with ID 62aad459fb672f7a0a80e0cf updated.",
                     "code": 200,
                     "message": "Metric data updated successfully."
+                }
+            },
+            "UpdateUELocationModel": {
+                "title": "UpdateUELocationModel",
+                "required": [
+                    "interval",
+                    "description"
+                ],
+                "type": "object",
+                "properties": {
+                    "interval": {
+                        "title": "Interval",
+                        "type": "integer"
+                    },
+                    "description": {
+                        "title": "Description",
+                        "type": "string"
+                    }
+                },
+                "example": {
+                    "interval": 15000,
+                    "description": "UE location information."
+                }
+            },
+            "UpdateUELocationResponseModel": {
+                "title": "UpdateUELocationResponseModel",
+                "required": [
+                    "data",
+                    "message"
+                ],
+                "type": "object",
+                "properties": {
+                    "data": {
+                        "title": "Data",
+                        "type": "string"
+                    },
+                    "code": {
+                        "title": "Code",
+                        "type": "integer",
+                        "default": 200
+                    },
+                    "message": {
+                        "title": "Message",
+                        "type": "string"
+                    }
+                },
+                "example": {
+                    "data": "UE location interval updated.",
+                    "code": 200,
+                    "message": "UE location interval updated successfully."
                 }
             },
             "ValidationError": {

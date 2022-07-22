@@ -83,7 +83,7 @@ async def add_metric_data(metric: MetricModel = Body(...)):
 
 @router.get("/", response_description="Metrics retrieved", 
             response_model=GetMetricsResponseModel)
-async def get_metrics():
+async def get_metrics_data():
     metrics = await retrieve_metrics()
     if metrics:
         return ResponseModel(data=metrics, code=200, 
