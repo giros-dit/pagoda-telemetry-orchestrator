@@ -17,10 +17,12 @@ metric_collection = database_metrics.get_collection("metrics_collection")
 
 ue_location_collection = database_ue_location.get_collection("ue_location_collection")
 
+
 # Metric helper
 def metric_helper(metric) -> dict:
     return {
         "id": str(metric["_id"]),
+        "site": metric["site"],
         "metricname": metric["metricname"],
         "operation": metric["operation"],
         "labels": metric["labels"],
@@ -30,10 +32,11 @@ def metric_helper(metric) -> dict:
 
 
 # Retrieve all metrics present in the database
-async def retrieve_metrics():
+async def retrieve_metrics(site: str):
     metrics = []
     async for metric in metric_collection.find():
-        metrics.append(metric_helper(metric))
+        if metric["site"] == site:
+            metrics.append(metric_helper(metric))
     return metrics
 
 
@@ -47,19 +50,19 @@ async def add_metric(metric_data: dict) -> dict:
 
 
 # Retrieve a metric with a matching ID
-async def retrieve_metric(id: str) -> dict:
+async def retrieve_metric(site: str, id: str) -> dict:
     metric = await metric_collection.find_one({"_id": ObjectId(id)})
-    if metric:
+    if metric and metric["site"] == site:
         return metric_helper(metric)
 
 
 # Update a metric with a matching ID
-async def update_metric(id: str, data: dict):
+async def update_metric(site: str, id: str, data: dict):
     # Return false if an empty request body is sent.
     if len(data) < 1:
         return False
     metric = await metric_collection.find_one({"_id": ObjectId(id)})
-    if metric:
+    if metric and metric["site"] == site:
         updated_metric = await metric_collection.update_one(
             {"_id": ObjectId(id)}, {"$set": data}
         )
@@ -69,9 +72,9 @@ async def update_metric(id: str, data: dict):
 
 
 # Delete a metric from the database
-async def delete_metric(id: str):
+async def delete_metric(site: str, id: str):
     metric = await metric_collection.find_one({"_id": ObjectId(id)})
-    if metric:
+    if metric and metric["site"] == site:
         await metric_collection.delete_one({"_id": ObjectId(id)})
         return True
 

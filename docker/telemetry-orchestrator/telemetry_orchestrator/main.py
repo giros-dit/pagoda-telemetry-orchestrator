@@ -44,8 +44,10 @@ async def startup_event():
     # nifi.deploy_exporter_service()
 
 
-app.include_router(MetricRouter, tags=["Prometheus Metrics"], prefix="/metric/"
-                   + str(SITE_ID))
+#app.include_router(MetricRouter, tags=["Prometheus Metrics"], prefix="/metric/"
+#                   + str(SITE_ID))
+
+app.include_router(MetricRouter, tags=["Prometheus Metrics"], prefix="/metric")                   
 
 app.include_router(UELocationRouter, tags=["UE Location"], prefix="/ue-location")
 

@@ -1,9 +1,16 @@
 from typing import Any, Dict, Optional, List, Union
 
+from enum import Enum
+
 from pydantic import BaseModel, Field
 
+class SiteModel(str, Enum):
+    site_a = "atica"
+    site_b = "economicas"
+    site_c = "pleiades"
 
 class MetricModel(BaseModel):
+    site: Optional[SiteModel] = None
     metricname: str = Field(...)
     labels: Optional[Dict[str, Any]] = None
     operation: Optional[str] = None
@@ -56,6 +63,7 @@ class AddMetricResponseModel(ResponseModel):
             "example": {
                 "data": {
                     "id": "62aad459fb672f7a0a80e0cf",
+                    "site": "atica",
                     "metricname": "node_network_transmit_packets_total",
                     "labels": {
                         "job": "node-exporter"
@@ -78,6 +86,7 @@ class GetMetricResponseModel(ResponseModel):
             "example": {
                 "data": {
                     "id": "62aad459fb672f7a0a80e0cf",
+                    "site": "atica",
                     "metricname": "node_network_transmit_packets_total",
                     "labels": {
                         "instance": "node-exporter:9100",
@@ -102,6 +111,7 @@ class GetMetricsResponseModel(ResponseModel):
                 "data": [
                     {
                         "id": "62aad459fb672f7a0a80e0cf",
+                        "site": "atica",
                         "metricname": "up",
                         "labels": {
                             "instance": "node-exporter:9100",
@@ -113,6 +123,7 @@ class GetMetricsResponseModel(ResponseModel):
                     },
                     {
                         "id": "62aad9fa0ecf10140cd50534",
+                        "site": "atica",
                         "metricname": "node_network_transmit_packets_total",
                         "labels": {
                             "instance": "node-exporter:9100",

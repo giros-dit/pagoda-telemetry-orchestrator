@@ -23,7 +23,7 @@ NDAC_URI_POST = os.getenv("NDAC_URI_POST")
 
 KAFKA_ENDPOINT = os.getenv("KAFKA_ENDPOINT")
 
-SITE_ID = os.getenv("SITE_ID")
+#SITE_ID = os.getenv("SITE_ID")
 
 
 def _getQueryLabels(expression: dict) -> str:
@@ -95,7 +95,9 @@ def config_metric_source(metric: MetricModel, metric_id: str) -> dict:
 
     # Collect variables for MetricSource
     # Sink Kafka topic
-    sink_topic_name = str(SITE_ID)+"-"+metric.metricname+"-"+topic_id
+    #sink_topic_name = str(SITE_ID)+"-"+metric.metricname+"-"+topic_id
+    sink_topic_name = metric.site+"-"+metric.metricname+"-"+topic_id
+
 
     # Endpoint for sink Kafka broker
     sink_broker_url = str(KAFKA_ENDPOINT)

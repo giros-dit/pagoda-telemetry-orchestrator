@@ -15,6 +15,7 @@ from telemetry_orchestrator.server.database import (
     update_metric,
 )
 from telemetry_orchestrator.server.models.metric import (
+    SiteModel,
     MetricModel,
     UpdateMetricModel,
     ResponseModel,
@@ -69,10 +70,11 @@ async def startup_event():
 '''
 
 
-@router.post("/", response_description="Metric added into the database", 
+@router.post("/{site}", response_description="Metric added into the database", 
              response_model=AddMetricResponseModel)
-async def add_metric_data(metric: MetricModel = Body(...)):
+async def add_metric_data(site: SiteModel, metric: MetricModel = Body(...)):
     metric = jsonable_encoder(metric)
+    metric["site"] = site
     new_metric = await add_metric(metric)
     logger.info("New Metric '{0}'.".format(new_metric))
     metric_obj = MetricModel.parse_obj(new_metric)
@@ -81,10 +83,10 @@ async def add_metric_data(metric: MetricModel = Body(...)):
         data=new_metric, code=200, message="Metric added successfully.")
 
 
-@router.get("/", response_description="Metrics retrieved", 
+@router.get("/{site}", response_description="Metrics retrieved", 
             response_model=GetMetricsResponseModel)
-async def get_metrics_data():
-    metrics = await retrieve_metrics()
+async def get_metrics_data(site: SiteModel):
+    metrics = await retrieve_metrics(site)
     if metrics:
         return ResponseModel(data=metrics, code=200, 
                              message="Metrics data retrieved successfully.")
@@ -92,59 +94,59 @@ async def get_metrics_data():
         data=metrics, code=200, message="Empty list returned.")
 
 
-@router.get("/{id}", response_description="Metric data retrieved", 
+@router.get("/{site}/{id}", response_description="Metric data retrieved", 
             response_model=GetMetricResponseModel)
-async def get_metric_data(id):
-    metric = await retrieve_metric(id)
+async def get_metric_data(site: SiteModel, id: str):
+    metric = await retrieve_metric(site, id)
     if metric:
         return ResponseModel(
             data=metric, message="Metric data retrieved successfully.")
     raise HTTPException(
         status_code=404, detail="An error occurred. " +
-        "Metric with ID {0} doesn't exist.".format(id))
+        "Metric with ID {0} doesn't exist in site {1}.".format(id, str(site.value)))
 
 
-@router.put("/{id}", response_description="Metric data updated", 
+@router.put("/{site}/{id}", response_description="Metric data updated", 
             response_model=UpdateMetricResponseModel)
-async def update_metric_data(id: str, req: UpdateMetricModel = Body(...)):
-    metric = await retrieve_metric(id)
+async def update_metric_data(site: SiteModel, id: str, req: UpdateMetricModel = Body(...)):
+    metric = await retrieve_metric(site, id)
     if metric:
         req = {k: v for k, v in req.dict().items() if v is not None}
-        updated_metric = await update_metric(id, req)
+        updated_metric = await update_metric(site, id, req)
         if updated_metric:
-            new_metric = await retrieve_metric(id)
+            new_metric = await retrieve_metric(site, id)
             logger.info("Updated Metric '{0}'.".format(new_metric))
             new_metric_obj = MetricModel.parse_obj(new_metric)
             reprocess_metric(new_metric_obj, new_metric['id'], nifi)
             return ResponseModel(
-                data="Metric with ID {} updated.".format(id),
+                data="Metric with ID {0} updated.".format(id),
                 code=200,
                 message="Metric data updated successfully."
             )
     raise HTTPException(
         status_code=404, 
         detail="An error occurred. " + 
-        "Metric with ID {0} doesn't exist.".format(id)
+        "Metric with ID {0} doesn't exist in site {1}.".format(id, str(site.value))
     )
 
 
 @router.delete(
-    "/{id}", response_description="Metric deleted from the database", 
+    "/{site}/{id}", response_description="Metric deleted from the database", 
     response_model=DeleteMetricResponseModel)
-async def delete_metric_data(id: str):
-    metric = await retrieve_metric(id)
+async def delete_metric_data(site: SiteModel, id: str):
+    metric = await retrieve_metric(site, id)
     if metric:
-        deleted_metric = await delete_metric(id)
+        deleted_metric = await delete_metric(site, id)
         if deleted_metric:
             metric_obj = MetricModel.parse_obj(metric)
             unprocess_metric(metric_obj, metric['id'], nifi)
             return ResponseModel(
-                data="Metric with ID {} removed.".format(id), 
+                data="Metric with ID {0} removed.".format(id), 
                 code=200,
                 message="Metric deleted successfully."
             )
     raise HTTPException(
         status_code=404, 
         detail="An error occurred. " + 
-        "Metric with ID {0} doesn't exist.".format(id)
+        "Metric with ID {0} doesn't exist in site {1}.".format(id, str(site.value))
     )
