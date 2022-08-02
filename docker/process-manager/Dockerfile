@@ -6,7 +6,7 @@ ENV PYTHONFAULTHANDLER=1 \
     PYTHONUNBUFFERED=1
 
 # Set hierarchy with folders
-ENV APP_NAME=app-manager
+ENV APP_NAME=process-manager
 ENV APP_DIR=/opt/${APP_NAME}
 RUN mkdir -p ${APP_DIR}
 WORKDIR ${APP_DIR}

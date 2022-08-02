@@ -1,22 +1,10 @@
 import logging
-import time
-from random import randrange
-from typing import List
 
 import nipyapi
-from nipyapi import parameters as nifi_params
-from nipyapi.nifi import ParameterContextEntity, ParameterEntity
-from nipyapi.nifi.models.controller_service_entity import \
-    ControllerServiceEntity
-from nipyapi.nifi.models.documented_type_dto import DocumentedTypeDTO
-from nipyapi.nifi.models.process_group_entity import ProcessGroupEntity
-from nipyapi.nifi.models.process_group_flow_entity import \
-    ProcessGroupFlowEntity
+
 from nipyapi.nifi.models.template_entity import TemplateEntity
 
 logger = logging.getLogger(__name__)
-
-EXPORTER_SERVICE_PG_NAME = "exporter-service"
 
 
 class NiFiClient(object):
