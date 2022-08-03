@@ -149,8 +149,43 @@ def config_ue_location_source(ue_location: UELocationModel,
     return arguments
 
 
+def config_ue_location_simple_source(ue_location: UELocationModel, 
+                                     ue_location_id: str) -> dict:
+    """
+    Builds configuration arguments for NDACSourceSimple application (NiFi)
+    """
+
+    # Get source NDAC endpoint
+    source_ndac_get_endpoint = str(NDAC_URI_GET)        
+
+    # DEPRECATED:
+    # Generation of topic ID from the hash composed of the metric along with 
+    # its own tags
+    # raw_topic_id = metric.metricname+labels
+    # topic_id = hashlib.md5(raw_topic_id.encode("utf-8")).hexdigest()
+    
+    # Topic ID = Metric's Object ID within MongoDB
+    topic_id = ue_location_id 
+
+    # Collect variables for MetricSource
+    # Sink Kafka topics
+    topic_icc_info = "icc-info"+"-"+topic_id
+
+    # Endpoint for sink Kafka broker
+    sink_broker_url = str(KAFKA_ENDPOINT)
+
+    arguments = {
+        "interval": ue_location.interval,
+        "ndac_get_url": source_ndac_get_endpoint,
+        "sink_broker_url": sink_broker_url,
+        "topic_icc_info": topic_icc_info
+    }
+    return arguments
+
+
 nifi_application_configs = {
     "MetricSource": config_metric_source,
     "MetricSourceYANG": config_metric_source,
-    "NDACSource": config_ue_location_source
+    "NDACSource": config_ue_location_source,
+    "NDACSourceSimple": config_ue_location_simple_source
 }
