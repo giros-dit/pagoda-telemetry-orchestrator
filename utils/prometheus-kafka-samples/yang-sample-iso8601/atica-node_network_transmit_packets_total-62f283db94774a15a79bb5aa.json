@@ -1,0 +1,54 @@
+{
+    "prometheus-pagoda:metrics": {
+        "metric": [
+            {
+                "label-set-id": "1077558793",
+                "name": "node_network_transmit_packets_total",
+                "metric-points": {
+                    "value": "72",
+                    "timestamp": "2022-08-09T15:57:56Z"
+                },
+                "labels": {
+                    "label": [
+                        {
+                            "name": "job",
+                            "value": "node-exporter"
+                        },
+                        {
+                            "name": "device",
+                            "value": "eth0"
+                        },
+                        {
+                            "name": "instance",
+                            "value": "node-exporter:9100"
+                        }
+                    ]
+                }
+            },
+            {
+                "label-set-id": "1080072701",
+                "name": "node_network_transmit_packets_total",
+                "metric-points": {
+                    "value": "0",
+                    "timestamp": "2022-08-09T15:57:56Z"
+                },
+                "labels": {
+                    "label": [
+                        {
+                            "name": "job",
+                            "value": "node-exporter"
+                        },
+                        {
+                            "name": "device",
+                            "value": "lo"
+                        },
+                        {
+                            "name": "instance",
+                            "value": "node-exporter:9100"
+                        }
+                    ]
+                }
+            }
+        ]
+    }
+}
