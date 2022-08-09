@@ -27,9 +27,9 @@ def process_metric(metric: MetricModel, metric_id: str, nifi: NiFiClient):
     # Renew access token for NiFi API
     nifi.login()
     arguments = nifi_application_configs[
-        "MetricSourceYANG"](metric, metric_id)
+        "MetricSourcePagodaYANG"](metric, metric_id)
     nifi.instantiate_flow_from_metric(
-        metric, metric_id, "MetricSourceYANG", arguments)
+        metric, metric_id, "MetricSourcePagodaYANG", arguments)
 
 
 def reprocess_metric(metric: MetricModel, metric_id: str, nifi: NiFiClient):
@@ -44,7 +44,7 @@ def reprocess_metric(metric: MetricModel, metric_id: str, nifi: NiFiClient):
     # Renew access token for NiFi API
     nifi.login()
     arguments = nifi_application_configs[
-        "MetricSourceYANG"](metric, metric_id)
+        "MetricSourcePagodaYANG"](metric, metric_id)
     nifi.update_flow_from_metric(metric, metric_id, arguments)
 
 

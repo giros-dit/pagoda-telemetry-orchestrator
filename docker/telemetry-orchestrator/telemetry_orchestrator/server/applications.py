@@ -68,7 +68,7 @@ def config_metric_source(metric: MetricModel, metric_id: str) -> dict:
     else:
         source_metric = metric.metricname
 
-    logger.info("Metric '{0}'.".format(source_metric))
+    # logger.info("Metric '{0}'.".format(source_metric))
 
     # Get source Prometheus
     source_prom_endpoint = str(PROMETHEUS_URI)
@@ -186,6 +186,7 @@ def config_ue_location_simple_source(ue_location: UELocationModel,
 nifi_application_configs = {
     "MetricSource": config_metric_source,
     "MetricSourceYANG": config_metric_source,
+    "MetricSourcePagodaYANG": config_metric_source,
     "NDACSource": config_ue_location_source,
     "NDACSourceSimple": config_ue_location_simple_source
 }

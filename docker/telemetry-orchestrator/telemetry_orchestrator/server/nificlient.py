@@ -595,9 +595,7 @@ class NiFiClient(object):
         # so far rely on "Polling" string
         http_ps = None
         for ps in pg_flow.flow.processors:
-            logger.info("CHACHO 1 %s" % interval)
             if "Polling" in ps.status.name:
-                logger.info("CHACHO 2 %s" % interval)
                 logger.debug("Updating %s processor" % ps.status.name)
                 http_ps = ps
                 break
