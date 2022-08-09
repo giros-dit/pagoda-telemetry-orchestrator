@@ -1,0 +1,26 @@
+{
+   "prometheus-pagoda:metrics": {
+      "metric": [
+         {
+            "label-set-id": "-181020729",
+            "name": "up",
+            "metric-points": {
+               "value": "1",
+               "timestamp": "2015-07-01T22:10:51Z"
+            },
+            "labels": {
+               "label": [
+                  {
+                     "name": "job",
+                     "value": "prometheus"
+                  },
+                  {
+                     "name": "instance",
+                     "value": "localhost:9090"
+                  }
+               ]
+            }
+         }
+      ]
+   }
+}

@@ -139,5 +139,24 @@ cython_debug/
 # VSCode
 .vscode
 
+# Intellij IDEA
+.idea
+
 # Desktop Services Store macOS
 .DS_Store
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Python venv
+.venv
+
+# Java-MVN stuff
+.classpath
+
+# Others
+.settings/
+.project
+target/

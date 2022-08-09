@@ -55,7 +55,6 @@ services:
     ports:
       - "8443:8443"
     volumes:
-      - ./docker/nifi/drivers/jinja-templates:/jinja-templates
       - ./docker/nifi/drivers/nars:/opt/nifi/nifi-current/extensions
   node-exporter:
     image: prom/node-exporter
