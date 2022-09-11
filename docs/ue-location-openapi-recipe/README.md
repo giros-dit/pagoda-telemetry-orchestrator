@@ -25,4 +25,4 @@ Como resultado, la activación de la recolección de información de localizaci�
 
 - `DELETE /ue-location/{id}`: Esta operación permite deshabilitar la función de localización de usuarios. Mediante esta operación, haciendo uso del ID asignado en la base de datos a la activación de la localización de los UEs, se puede deshabilitar el proceso de localización de UEs, así como la información relativa en la base de datos. Por tanto, esta operación desencadena la desactivación y eliminación del proceso relativo al servicio _Collector Agent_ (del sistema de orquestación de telemetría para así parar de realizar las consultas periódicas a la API de `NDAC` y dejar de almacenar los datos de localización de usuarios en el bus de Kafka. El ejemplo de cuerpo de la respuesta se muestra en la siguiente figura.
 
-![DELETE UE location response](docs/images/telemetry-orchestrator-crud-ue-location-delete-response.png)
+![DELETE UE location response](../images/telemetry-orchestrator-crud-prometheus-delete-response.png)
