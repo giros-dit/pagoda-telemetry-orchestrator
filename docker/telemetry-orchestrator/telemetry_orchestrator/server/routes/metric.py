@@ -8,7 +8,6 @@ import time
 import requests
 import subprocess
 
-
 from telemetry_orchestrator.server.database import (
     add_metric,
     delete_metric,
@@ -143,19 +142,31 @@ async def add_metric_data(site: SiteModel, metric: MetricModel = Body(...)):
     metric_obj = MetricModel.parse_obj(new_metric)
 
     metric_name = ""
+    metric_op = ""
+    metric_interval = ""
     if metric_obj.operation:
-        metric_name = metric_obj.operation
+        metric_name = metric_obj.metricname
+        metric_op = metric_obj.operation.split(" ")[0]
+        metric_interval = metric_obj.operation.split(" ")[1]
     else:
         metric_name = metric_obj.metricname
 
     prometheus_request = ""
     if metric_obj.labels:
         labels = _getQueryLabels(metric_obj.labels)
-        prometheus_request = (
-            "query=" + metric_name +
-            "{" + labels + "}")
+        if metric_obj.operation:
+            prometheus_request = (
+                "query=" + metric_op + "(" + metric_name +
+                "{" + labels + "}" + "[" + metric_interval + "]" + ")") 
+        else:
+            prometheus_request = (
+                "query=" + metric_name +
+                "{" + labels + "}" )
     else:
-        prometheus_request = ("query=" + metric_name)  
+        if metric_obj.operation:
+            prometheus_request = ("query=" + metric_op + "(" + metric_name + "[" + metric_interval + "]" + ")")
+        else:
+            prometheus_request = ("query=" + metric_name)
 
     detail_message = ""
     check_prometheus = checkPrometheusEndpoint()
@@ -202,6 +213,7 @@ async def get_metric_data(site: SiteModel, id: str):
 async def update_metric_data(site: SiteModel, id: str, req: UpdateMetricModel = Body(...)):
     metric = await retrieve_metric(site, id)
     if metric:
+        # metric_obj = MetricModel.parse_obj(metric)
         req = {k: v for k, v in req.dict().items() if v is not None}
         updated_metric = await update_metric(site, id, req)
         if updated_metric:

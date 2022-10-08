@@ -97,6 +97,7 @@ def _parseOperationSyntax(operation: str) -> str:
     return new_operation
 """
 
+
 # UE location helper
 def ue_location_helper(ue_location) -> dict:
     return {

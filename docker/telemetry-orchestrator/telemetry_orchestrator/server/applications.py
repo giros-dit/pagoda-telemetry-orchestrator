@@ -62,8 +62,12 @@ def config_metric_source(metric: MetricModel, metric_id: str) -> dict:
 
     # Get source Metric
     source_metric = ""
+    metric_op = ""
+    metric_int = ""
     if metric.operation:
-        source_metric = metric.operation
+        metric_op = metric.operation.split(" ")[0]
+        metric_int = metric.operation.split(" ")[1]
+        source_metric = metric.metricname
         # source_metric = _parseOperationSyntax(metric.operation)
     else:
         source_metric = metric.metricname
@@ -77,12 +81,22 @@ def config_metric_source(metric: MetricModel, metric_id: str) -> dict:
     prometheus_request = ""
     if metric.labels:
         labels = _getQueryLabels(metric.labels)
-        prometheus_request = (
-            source_prom_endpoint +
-            "?query=" + source_metric +
-            "{" + labels + "}")
+        if metric.operation:
+            prometheus_request = (
+                source_prom_endpoint +
+                "?query=" + metric_op + "(" + source_metric +
+                "{" + labels + "}" + "[" + metric_int + "]" + ")")
+        else:
+            prometheus_request = (
+                source_prom_endpoint +
+                "?query=" + source_metric +
+                "{" + labels + "}")
     else:
-        prometheus_request = (source_prom_endpoint + "?query=" + source_metric)        
+        if metric.operation:
+            prometheus_request = (source_prom_endpoint + "?query=" + metric_op + 
+            "(" + source_metric + "[" + metric_int + "]" + ")")
+        else:
+            prometheus_request = (source_prom_endpoint + "?query=" + source_metric)        
 
     # DEPRECATED:
     # Generation of topic ID from the hash composed of the metric along with 
@@ -96,8 +110,10 @@ def config_metric_source(metric: MetricModel, metric_id: str) -> dict:
     # Collect variables for MetricSource
     # Sink Kafka topic
     #sink_topic_name = str(SITE_ID)+"-"+metric.metricname+"-"+topic_id
-    sink_topic_name = metric.site+"-"+metric.metricname+"-"+topic_id
-
+    if metric.operation:
+        sink_topic_name = metric.site+"-"+metric.operation.split(" ")[0]+"-"+metric.metricname+"-"+topic_id
+    else:
+        sink_topic_name = metric.site+"-"+metric.metricname+"-"+topic_id
 
     # Endpoint for sink Kafka broker
     sink_broker_url = str(KAFKA_ENDPOINT)

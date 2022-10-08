@@ -74,9 +74,9 @@ def process_ue_location(ue_location: UELocationModel, ue_location_id: str,
     # Renew access token for NiFi API
     nifi.login()
     arguments = nifi_application_configs[
-        "NDACSourceSimple"](ue_location, ue_location_id)
+        "NDACSource"](ue_location, ue_location_id)
     nifi.instantiate_flow_from_ue_location(
-        ue_location, ue_location_id, "NDACSourceSimple", arguments)
+        ue_location, ue_location_id, "NDACSource", arguments)
 
 
 def reprocess_ue_location(ue_location: UELocationModel, ue_location_id: str, 
@@ -91,7 +91,7 @@ def reprocess_ue_location(ue_location: UELocationModel, ue_location_id: str,
     # Renew access token for NiFi API
     nifi.login()
     arguments = nifi_application_configs[
-        "NDACSourceSimple"](ue_location, ue_location_id)
+        "NDACSource"](ue_location, ue_location_id)
     nifi.update_flow_from_ue_location(ue_location, ue_location_id, arguments)
 
 

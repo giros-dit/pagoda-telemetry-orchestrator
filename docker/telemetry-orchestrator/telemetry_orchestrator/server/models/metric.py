@@ -21,10 +21,11 @@ class MetricModel(BaseModel):
         schema_extra = {
             "example": {
                 "metricname": "node_network_transmit_packets_total",
+                "operation": "rate 1m",
                 "labels": {
                     'job': 'node-exporter'
                 },
-                "interval": 10000,
+                "interval": 3000,
                 "description": 
                 "Packets transmitted through network interfaces."
             }
@@ -40,11 +41,10 @@ class UpdateMetricModel(BaseModel):
         schema_extra = {
             "example": {
                 "labels": {
-                    'device': 'eth0',
-                    'instance': 'node-exporter:9100', 
+                    'device': 'eno1',
                     'job': 'node-exporter'
                 },
-                "interval": 5000
+                "interval": 2000
             }
         }
 
@@ -89,7 +89,6 @@ class GetMetricResponseModel(ResponseModel):
                     "site": "atica",
                     "metricname": "node_network_transmit_packets_total",
                     "labels": {
-                        "instance": "node-exporter:9100",
                         "job": "node-exporter"
                     },
                     "interval": 5000,
@@ -114,7 +113,6 @@ class GetMetricsResponseModel(ResponseModel):
                         "site": "atica",
                         "metricname": "up",
                         "labels": {
-                            "instance": "node-exporter:9100",
                             "job": "node-exporter"
                         },
                         "interval": 10000,
@@ -126,7 +124,6 @@ class GetMetricsResponseModel(ResponseModel):
                         "site": "atica",
                         "metricname": "node_network_transmit_packets_total",
                         "labels": {
-                            "instance": "node-exporter:9100",
                             "job": "node-exporter"
                         },
                         "interval": 5000,
