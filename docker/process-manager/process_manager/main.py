@@ -15,6 +15,14 @@ from process_manager.nificlient import NiFiClient
 
 from process_manager import loader
 
+from process_manager.database import (
+    add_alert
+)
+
+from process_manager.models.alerts import (
+    AlertModel
+)
+
 logger = logging.getLogger(__name__)
 
 #with open("/opt/process-manager/process_manager/prometheus-rules/server-rules1.yml") as file:
@@ -122,9 +130,43 @@ async def onboard_application(application_type: Literal["NIFI", "ALERT"],
         try:
             # Upload Prometheus alert rule to Prometheus
             # Update name of alert rule file and copy to Prometheus alert repository
-            foldername = '/opt/process-manager/process_manager/prometheus-rules'
-            fullname = os.path.join(foldername, "%s.yml" % name)
-            shutil.copyfile(temp_path, fullname)  
+            foldername = '/opt/process-manager/process_manager/prometheus-rules/single'
+            fullname = os.path.join(foldername, "%s.yml" % name)  
+     
+            with open(temp_path) as file:
+                try:
+                    original_rule_dict = yaml.load(file, Loader=yaml.FullLoader)
+                    database_rule_dict = dict()
+                    database_rule_dict['filename'] = name
+                    database_rule_dict['rulename'] = original_rule_dict['groups'][0]['name']
+                    database_rule_dict['alertname'] = original_rule_dict['groups'][0]['rules'][0]['alert']
+                    database_rule_dict['expr'] = original_rule_dict['groups'][0]['rules'][0]['expr']
+                    database_rule_dict['duration'] = original_rule_dict['groups'][0]['rules'][0]['for']
+                    database_rule_dict['severity'] = original_rule_dict['groups'][0]['rules'][0]['labels']['severity']
+                    database_rule_dict['summary'] = original_rule_dict['groups'][0]['rules'][0]['annotations']['summary']
+                    database_rule_dict['description'] = original_rule_dict['groups'][0]['rules'][0]['annotations']['description']
+                except KeyError as e:
+                    logger.error(str(e))
+                    os.remove(temp_path)
+                    raise HTTPException(
+                        status_code=400,
+                        detail=str(e)
+                    )
+            new_alert = await add_alert(database_rule_dict)
+            logger.info("New Alert '{0}'.".format(new_alert))
+            alert_obj = AlertModel.parse_obj(new_alert)
+            if new_alert:
+                # Upload Prometheus alert rule to Prometheus
+                shutil.copyfile(temp_path, fullname)
+                # Store Prometheus alert rule in local catalog
+                f_path = "/opt/process-manager/process_manager/catalog/alert/rules/single/%s.yml" % name
+                application = dict()
+                application["application_id"] = alert_obj.filename
+                application["name"] = alert_obj.rulename
+                application["description"] = alert_obj.description
+                logger.info("Application information: {0}".format(application))
+                shutil.move(temp_path, f_path)
+        
         except TypeError as e:
             logger.error(str(e))
             os.remove(temp_path)
@@ -139,15 +181,7 @@ async def onboard_application(application_type: Literal["NIFI", "ALERT"],
                 status_code=409,
                 detail=str(e)
             )
-     
-        # Store Prometheus alert rule in local catalog
-        f_path = "/opt/process-manager/process_manager/catalog/alert/rules/%s.yml" % name
-        application = dict()
-        application["application_id"] = name
-        application["name"] = name
-        application["description"] = description
-        logger.info("Application information: {0}".format(application))
-        shutil.move(temp_path, f_path)
+
     return {"ID": application["application_id"]}
 
 app.include_router(AlertRouter, tags=["Prometheus Alerts"], prefix="/alerts")                   

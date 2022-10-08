@@ -59,9 +59,9 @@ async def add_alert_data(alert: AlertModel = Body(...)):
     detail_message = ""
     if new_alert:
         # Store Proemetheus alert rule in Prometheus repository
-        prom_filename = ('/opt/process-manager/process_manager/prometheus-rules/' + alert_obj.rulename + '-rule.yml')
+        prom_filename = ('/opt/process-manager/process_manager/prometheus-rules/single/' + alert_obj.filename + '.yml')
         # Store Prometheus alert rule in local catalog
-        catalog_filename = "/opt/process-manager/process_manager/catalog/alert/rules/%s-rule.yml" % alert_obj.rulename
+        catalog_filename = "/opt/process-manager/process_manager/catalog/alert/rules/single/%s.yml" % alert_obj.filename
         prom_rule = {}
         groups = {}
         group = {}
@@ -127,8 +127,8 @@ async def delete_alert_data(id: str):
         deleted_alert = await delete_alert(id)
         if deleted_alert:
             alert_obj = AlertModel.parse_obj(alert)
-            prom_filename = ('/opt/process-manager/process_manager/prometheus-rules/' + alert_obj.rulename + '-rule.yml')
-            catalog_filename = "/opt/process-manager/process_manager/catalog/alert/rules/%s-rule.yml" % alert_obj.rulename
+            prom_filename = ('/opt/process-manager/process_manager/prometheus-rules/single/' + alert_obj.filename + '.yml')
+            catalog_filename = "/opt/process-manager/process_manager/catalog/alert/rules/single/%s.yml" % alert_obj.filename
             os.remove(prom_filename)
             os.remove(catalog_filename)
             return ResponseModel(

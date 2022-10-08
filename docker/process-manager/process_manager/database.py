@@ -17,6 +17,7 @@ alert_collection = database_alerts.get_collection("alerts_collection")
 def alert_helper(alert) -> dict:
     return {
         "id": str(alert["_id"]),
+        "filename": alert["filename"],
         "rulename": alert["rulename"],
         "alertname": alert["alertname"],
         "expr": alert["expr"],
@@ -51,11 +52,3 @@ async def delete_alert(id: str):
     if alert:
         await alert_collection.delete_one({"_id": ObjectId(id)})
         return True
-
-# UE location helper
-def ue_location_helper(ue_location) -> dict:
-    return {
-        "id": str(ue_location["_id"]),
-        "interval": ue_location["interval"],
-        "description": ue_location["description"],
-    }

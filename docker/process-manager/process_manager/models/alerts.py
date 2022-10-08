@@ -6,6 +6,7 @@ from pydantic import BaseModel, Field
 
 
 class AlertModel(BaseModel):
+    filename: str = Field(...)
     rulename: str = Field(...)
     alertname: str = Field(...)
     expr: str = Field(...)
@@ -17,6 +18,7 @@ class AlertModel(BaseModel):
     class Config:
         schema_extra = {
             "example": {
+                "filename": "example",
                 "rulename": "host",
                 "alertname": "high_cpu",
                 "expr": "node_load1 > 10.5",
@@ -43,6 +45,7 @@ class AddAlertResponseModel(ResponseModel):
             "example": {
                 "data": {
                     "id": "62aad459fb672f7a0a80e0cf",
+                    "filename": "example",
                     "rulename": "host",
                     "alertname": "high_cpu",
                     "expr": "node_load1 > 10.5",
@@ -66,6 +69,7 @@ class GetAlertResponseModel(ResponseModel):
             "example": {
                 "data": {
                     "id": "62aad459fb672f7a0a80e0cf",
+                    "filename": "example",
                     "rulename": "host",
                     "alertname": "high_cpu",
                     "expr": "node_load1 > 10.5",
@@ -90,6 +94,7 @@ class GetAlertsResponseModel(ResponseModel):
                 "data": [
                     {
                         "id": "62aad459fb672f7a0a80e0cf",
+                        "filename": "example",
                         "rulename": "host",
                         "alertname": "high_cpu",
                         "expr": "node_load1 > 10.5",
@@ -101,6 +106,7 @@ class GetAlertsResponseModel(ResponseModel):
                     },
                     {
                         "id": "62aad459fb672f7a0a80e0cf",
+                        "filename": "example",
                         "rulename": "host",
                         "alertname": "high_cpu",
                         "expr": "node_load1 > 9.5",
