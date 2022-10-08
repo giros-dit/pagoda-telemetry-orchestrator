@@ -1,0 +1,64 @@
+groups:
+- name: targets
+  rules:
+  # Alert for any instance that is unreachable for >2 minutes.
+  - alert: service_down
+    expr: up == 0
+    for: 1m
+    labels:
+      severity: critical
+    annotations:
+      summary: "Instance {{ $labels.instance }} down"
+      description: "The instance {{ $labels.instance }} of job {{ $labels.job }} has been down for more than 2 minutes."
+  
+- name: host
+  rules:
+  # Alert for the node-exporter instance when the average CPU load for the last minute reaches more than 10.5%.
+  - alert: high_cpu
+    expr: node_load1 > 10.5
+    for: 2m
+    labels:
+      severity: critical
+    annotations:
+      summary: "Server CPU is under high load"
+      description: "Server CPU is under high load: {{ humanize $value}}%. Reported by instance {{ $labels.instance }} of job {{ $labels.job }}."
+
+  # Alert for the node-exporter instance when the Host storage for the last minute reaches more than 85%.
+  - alert: high_storage
+    expr:  avg((node_filesystem_size_bytes - node_filesystem_avail_bytes)  / node_filesystem_size_bytes) * 100 > 85
+    for: 2m
+    labels:
+      severity: critical
+    annotations:
+      summary: "Server storage is almost full"
+      description: "Server storage usage is {{ humanize $value}}%."
+
+  # Alert for the node-exporter instance when the Host memory for the last minute reaches more than 85%.
+  - alert: high_memory
+    expr: (sum(node_memory_MemTotal_bytes) - sum(node_memory_MemFree_bytes + node_memory_Buffers_bytes + node_memory_Cached_bytes) ) / sum(node_memory_MemTotal_bytes) * 100 > 85
+    for: 2m
+    labels:
+      severity: critical
+    annotations:
+      summary: "Server memory is almost full"
+      description: "Server memory usage is {{ humanize $value}}%."
+
+  # Alert for the node-exporter instance when the Host incoming traffic rate for the last minute reaches more than 200 byte/sec.
+  - alert: high_inbound_traffic
+    expr: rate(node_network_receive_bytes_total{device="eth0"}[1m]) > 200
+    for: 2m
+    labels:
+      severity: critical
+    annotations:
+      summary: "Server incoming traffic rate is under high rate"
+      description: "Server incoming traffic is under high rate: {{ humanize $value}}. Reported by instance {{ $labels.instance }} of job {{ $labels.job }}."
+
+  # Alert for the node-exporter instance when the Host outgoing traffic rate for the last minute reaches more than 2000 byte/sec.
+  - alert: high_outbound_traffic
+    expr: rate(node_network_transmit_bytes_total{device="eth0"}[1m]) > 2000
+    for: 2m
+    labels:
+      severity: critical
+    annotations:
+      summary: "Server incoming traffic rate is under high rate"
+      description: "Server incoming traffic is under high rate: {{ humanize $value}}. Reported by instance {{ $labels.instance }} of job {{ $labels.job }}."

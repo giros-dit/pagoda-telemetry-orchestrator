@@ -97,7 +97,31 @@ services:
     hostname: node-exporter
     container_name: node-exporter
     ports:
-      - "9100:9100"
+      - "9101:9100"
+    restart: unless-stopped
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.rootfs=/rootfs'
+     # - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+      - '--path.sysfs=/host/sys'
+      - '--collector.filesystem.ignored-mount-points=^/(sys|proc|dev|host|etc)($$|/)'
+    depends_on:
+      - prometheus
+  node_exporter:
+    image: quay.io/prometheus/node-exporter:latest
+    hostname: node_exporter
+    container_name: node_exporter
+    command:
+      - '--path.rootfs=/host'
+    network_mode: host
+    pid: host
+    restart: unless-stopped
+    volumes:
+      - '/:/host:ro,rslave'
     depends_on:
       - prometheus
   process-manager:
@@ -111,10 +135,12 @@ services:
       - NIFI_URI=${NIFI_URI}
       - NIFI_USERNAME=${NIFI_USERNAME}
       - NIFI_PASSWORD=${NIFI_PASSWORD}
+      - MONGO_URL=${MONGO_URL}
     ports:
       - "8082:8080"
     volumes:
       - ./docker/process-manager/process_manager:/opt/process-manager/process_manager
+      - ./docker/prometheus/config/prometheus-rules:/opt/process-manager/process_manager/prometheus-rules
     depends_on:
       - nifi
   prometheus:
@@ -123,10 +149,16 @@ services:
     container_name: prometheus
     ports:
       - "9099:9090"
+    networks:
+      - monitor-net
+      - default
+    extra_hosts:
+      - "host.docker.internal: 172.23.5.254"
     volumes:
       - ./docker/prometheus/config/prometheus.yml:/etc/prometheus/prometheus.yml
       - ./docker/prometheus/config/server-rules.yml:/etc/prometheus/server-rules.yml
       - ./docker/prometheus/config/container-rules.yml:/etc/prometheus/container-rules.yml
+      - ./docker/prometheus/config/prometheus-rules:/etc/prometheus/prometheus-rules
   pushgateway:
     image: prom/pushgateway
     hostname: pushgateway
@@ -171,3 +203,12 @@ services:
     logging:
       driver: none
 
+networks:
+  monitor-net:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.23.0.0/16
+          ip_range: 172.23.5.0/24
+          gateway: 172.23.5.254

@@ -11,6 +11,7 @@ global:
 
 # Load rules once and periodically evaluate them according to the global 'evaluation_interval'.
 rule_files:
+  - "prometheus-rules/*.yml"
   - server-rules.yml  
   - container-rules.yml
   # - "first.rules"
@@ -39,7 +40,7 @@ scrape_configs:
     scrape_interval: 5s
 
     static_configs:
-      - targets: ['node-exporter:9100']
+      - targets: ['172.23.5.254:9100']
 
   - job_name: 'cadvisor'
 

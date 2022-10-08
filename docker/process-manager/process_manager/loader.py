@@ -1,5 +1,8 @@
+from fileinput import filename
 import logging
 import os
+import shutil
+import yaml
 from typing import Optional
 from xml.etree import ElementTree as et
 
@@ -10,7 +13,7 @@ logger = logging.getLogger(__name__)
 # Config catalog paths
 script_dir = os.path.dirname(__file__)
 TEMPLATES_PATH = os.path.join(script_dir, "catalog", "nifi", "templates/")
-
+RULES_PATH = os.path.join(script_dir, "catalog", "alert", "rules/")
 
 def upload_local_nifi_templates(
         nifi: NiFiClient):
@@ -28,6 +31,26 @@ def upload_local_nifi_templates(
             continue
         logger.info("Template with ID '{0}' uploaded.".format(template.id))
         logger.info("Template information: {0}".format(template))
+
+
+def upload_local_alert_rules():
+    """
+    Upload Prometheus alert rules stored locally in the service.
+    """
+    # Upload alert rules
+    for file in os.listdir(RULES_PATH):
+        foldername = '/opt/process-manager/process_manager/prometheus-rules'
+        logger.info("Uploading '%s' admin alert rule to Prometheus alert repository..." % file)
+        try:
+            file_content = open(RULES_PATH + file, 'rb')
+            filename = str(file)
+            fullname = os.path.join(foldername, filename)
+            newfile = open(fullname, 'wb')
+            shutil.copyfileobj(file_content, newfile)
+        except Exception as e:
+            logger.info(str(e))
+            continue
+        logger.info("Rule file '{0}' uploaded.".format(file))
 
 
 def upload_nifi_template(

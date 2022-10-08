@@ -2,15 +2,30 @@ import logging
 import os
 import shutil
 import time
+import yaml
+
 from typing import Literal, Optional
 
 from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.staticfiles import StaticFiles
+from process_manager.alert import router as AlertRouter
+
+
 from process_manager.nificlient import NiFiClient
 
 from process_manager import loader
 
 logger = logging.getLogger(__name__)
+
+#with open("/opt/process-manager/process_manager/prometheus-rules/server-rules1.yml") as file:
+#    yml_obj = yaml.load(file, Loader=yaml.FullLoader)
+#    print(yml_obj)
+
+#dict_file = [{'sports' : ['soccer', 'football', 'basketball', 'cricket', 'hockey', 'table tennis']},
+#{'countries' : ['Pakistan', 'USA', 'India', 'China', 'Germany', 'France', 'Spain']}]
+
+#with open("/opt/process-manager/process_manager/prometheus-rules/example.yml", 'w') as file:
+#    yaml.dump(dict_file, file)
 
 # Process Manager
 # PROCESS_MANAGER_URI = os.getenv("PROCESS_MANAGER_URI", "http://process-manager:8080")
@@ -38,6 +53,8 @@ app.mount("/catalog", StaticFiles(directory=st_abs_file_path), name="catalog")
 
 @app.on_event("startup")
 async def startup_event():
+    # Upload Prometheus alert admin rules
+    loader.upload_local_alert_rules()
     # Check NiFi REST API is up
     # Hack for startup
     while True:
@@ -49,12 +66,11 @@ async def startup_event():
                            "Retrying after 10 seconds...")
             time.sleep(10)
     # Upload NiFi admin templates
-    loader.upload_local_nifi_templates(
-        nifi)
+    loader.upload_local_nifi_templates(nifi)
 
 
-@app.post("/applications/")
-async def onboard_application(application_type: Literal["NIFI"],
+@app.post("/applications", tags=["Default Processes Management"])
+async def onboard_application(application_type: Literal["NIFI", "ALERT"],
                               name: str,
                               description: Optional[str] = None,
                               file: UploadFile = File(...)):
@@ -94,5 +110,48 @@ async def onboard_application(application_type: Literal["NIFI"],
         # f_path = "/opt/process-manager/process_manager/catalog/nifi/templates/%s.xml" % application["application_id"]
 
         shutil.move(temp_path, f_path)
-
+    
+    else:
+        # Write template to temporary file
+        temp_folder = "/tmp/prometheus/alerts/"
+        temp_path = os.path.join(temp_folder, "%s.yml" % name)
+        os.makedirs(temp_folder, exist_ok=True)
+        f = open(temp_path, "wb")
+        f.write(contents)
+        f.close()
+        try:
+            # Upload Prometheus alert rule to Prometheus
+            # Update name of alert rule file and copy to Prometheus alert repository
+            foldername = '/opt/process-manager/process_manager/prometheus-rules'
+            fullname = os.path.join(foldername, "%s.yml" % name)
+            shutil.copyfile(temp_path, fullname)  
+        except TypeError as e:
+            logger.error(str(e))
+            os.remove(temp_path)
+            raise HTTPException(
+                status_code=400,
+                detail=str(e)
+            )
+        except ValueError as e:
+            logger.error(str(e))
+            os.remove(temp_path)
+            raise HTTPException(
+                status_code=409,
+                detail=str(e)
+            )
+     
+        # Store Prometheus alert rule in local catalog
+        f_path = "/opt/process-manager/process_manager/catalog/alert/rules/%s.yml" % name
+        application = dict()
+        application["application_id"] = name
+        application["name"] = name
+        application["description"] = description
+        logger.info("Application information: {0}".format(application))
+        shutil.move(temp_path, f_path)
     return {"ID": application["application_id"]}
+
+app.include_router(AlertRouter, tags=["Prometheus Alerts"], prefix="/alerts")                   
+
+@app.get("/", tags=["Root"])
+async def read_root():
+    return {"message": "Welcome to the Process Manager API!"}
