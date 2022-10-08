@@ -130,9 +130,9 @@ async def onboard_application(application_type: Literal["NIFI", "ALERT"],
         try:
             # Upload Prometheus alert rule to Prometheus
             # Update name of alert rule file and copy to Prometheus alert repository
-            foldername = '/opt/process-manager/process_manager/prometheus-rules/single'
+            foldername = "/opt/process-manager/process_manager/prometheus-rules/single/"
             fullname = os.path.join(foldername, "%s.yml" % name)  
-     
+            os.makedirs(foldername, exist_ok=True)
             with open(temp_path) as file:
                 try:
                     original_rule_dict = yaml.load(file, Loader=yaml.FullLoader)
@@ -159,7 +159,9 @@ async def onboard_application(application_type: Literal["NIFI", "ALERT"],
                 # Upload Prometheus alert rule to Prometheus
                 shutil.copyfile(temp_path, fullname)
                 # Store Prometheus alert rule in local catalog
-                f_path = "/opt/process-manager/process_manager/catalog/alert/rules/single/%s.yml" % name
+                f_path = "/opt/process-manager/process_manager/catalog/alert/rules/single/"
+                f_name = os.path.join(f_path, "%s.yml" % name)  
+                os.makedirs(f_path, exist_ok=True)
                 application = dict()
                 application["application_id"] = alert_obj.filename
                 application["name"] = alert_obj.rulename

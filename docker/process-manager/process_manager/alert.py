@@ -59,9 +59,13 @@ async def add_alert_data(alert: AlertModel = Body(...)):
     detail_message = ""
     if new_alert:
         # Store Proemetheus alert rule in Prometheus repository
-        prom_filename = ('/opt/process-manager/process_manager/prometheus-rules/single/' + alert_obj.filename + '.yml')
+        prom_folder = "/opt/process-manager/process_manager/prometheus-rules/single/"
+        prom_filename = os.path.join(prom_folder, "%s.yml" % alert_obj.filename)  
+        os.makedirs(prom_folder, exist_ok=True)
         # Store Prometheus alert rule in local catalog
-        catalog_filename = "/opt/process-manager/process_manager/catalog/alert/rules/single/%s.yml" % alert_obj.filename
+        catalog_folder = "/opt/process-manager/process_manager/catalog/alert/rules/single/"
+        catalog_filename = os.path.join(catalog_folder, "%s.yml" % alert_obj.filename)  
+        os.makedirs(catalog_folder, exist_ok=True)
         prom_rule = {}
         groups = {}
         group = {}
