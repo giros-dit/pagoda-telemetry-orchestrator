@@ -62,7 +62,7 @@ app.mount("/catalog", StaticFiles(directory=st_abs_file_path), name="catalog")
 @app.on_event("startup")
 async def startup_event():
     # Upload Prometheus alert admin rules
-    loader.upload_local_alert_rules()
+    await loader.upload_local_alert_rules()
     # Check NiFi REST API is up
     # Hack for startup
     while True:
@@ -167,7 +167,7 @@ async def onboard_application(application_type: Literal["NIFI", "ALERT"],
                 application["name"] = alert_obj.rulename
                 application["description"] = alert_obj.description
                 logger.info("Application information: {0}".format(application))
-                shutil.move(temp_path, f_path)
+                shutil.move(temp_path, f_name)
         
         except TypeError as e:
             logger.error(str(e))

@@ -156,8 +156,6 @@ services:
       - "host.docker.internal: 172.23.5.254"
     volumes:
       - ./docker/prometheus/config/prometheus.yml:/etc/prometheus/prometheus.yml
-      - ./docker/prometheus/config/server-rules.yml:/etc/prometheus/server-rules.yml
-      - ./docker/prometheus/config/container-rules.yml:/etc/prometheus/container-rules.yml
       - ./docker/prometheus/config/prometheus-rules:/etc/prometheus/prometheus-rules
   pushgateway:
     image: prom/pushgateway

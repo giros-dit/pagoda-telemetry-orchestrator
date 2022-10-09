@@ -12,8 +12,9 @@ global:
 # Load rules once and periodically evaluate them according to the global 'evaluation_interval'.
 rule_files:
   - "prometheus-rules/*.yml"
-  - server-rules.yml  
-  - container-rules.yml
+  - "prometheus-rules/single/*.yml"
+  # - server-rules.yml  
+  # - container-rules.yml
   # - "first.rules"
   # - "second.rules"
 

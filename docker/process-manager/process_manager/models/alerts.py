@@ -94,7 +94,7 @@ class GetAlertsResponseModel(ResponseModel):
                 "data": [
                     {
                         "id": "62aad459fb672f7a0a80e0cf",
-                        "filename": "example",
+                        "filename": "example1",
                         "rulename": "host",
                         "alertname": "high_cpu",
                         "expr": "node_load1 > 10.5",
@@ -106,7 +106,7 @@ class GetAlertsResponseModel(ResponseModel):
                     },
                     {
                         "id": "62aad459fb672f7a0a80e0cf",
-                        "filename": "example",
+                        "filename": "example2",
                         "rulename": "host",
                         "alertname": "high_cpu",
                         "expr": "node_load1 > 9.5",
