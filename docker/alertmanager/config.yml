@@ -1,9 +1,25 @@
 global:
   resolve_timeout: 5m
 route:
-  receiver: webhook_receiver
+  receiver: alertmanager2kafka
+  group_by: [alertname,job]
+  # How long to initially wait to send a notification for a group
+  # of alerts. Allows to wait for an inhibiting alert to arrive or collect
+  # more initial alerts for the same group. (Usually ~0s to few minutes.)
+  group_wait: 30s
+  # How long to wait before sending a notification about new alerts that
+  # are added to a group of alerts for which an initial notification has
+  # already been sent. (Usually ~5m or more.)
+  group_interval: 5m
+  # How long to wait before sending a notification again if it has already
+  # been sent successfully for an alert. (Usually ~3h or more).
+  repeat_interval: 30s
+  # receiver: webhook_receiver
 receivers:
-    - name: webhook_receiver
+    - name: alertmanager2kafka
       webhook_configs:
-        - url: 'https://webhook.site/7a5ed800-0c46-433f-89db-2ee99ab2711c'
-          send_resolved: false
+        - url: http://alertmanager2kafka:9097/webhook
+    # - name: webhook_receiver
+    #  webhook_configs:
+    #    - url: 'https://webhook.site/7a5ed800-0c46-433f-89db-2ee99ab2711c'
+    #      send_resolved: false

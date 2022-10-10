@@ -186,7 +186,7 @@ async def onboard_application(application_type: Literal["NIFI", "ALERT"],
 
     return {"ID": application["application_id"]}
 
-app.include_router(AlertRouter, tags=["Prometheus Alerts"], prefix="/alerts")                   
+app.include_router(AlertRouter, tags=["Prometheus Alerts Management"], prefix="/alerts")                   
 
 @app.get("/", tags=["Root"])
 async def read_root():

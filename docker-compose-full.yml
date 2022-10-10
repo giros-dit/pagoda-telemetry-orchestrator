@@ -11,6 +11,18 @@ services:
     command:
       - '--config.file=/etc/alertmanager/config.yml'
       - '--storage.path=/alertmanager'
+  alertmanager2kafka:
+    image: genunix/alertmanager2kafka
+    hostname: alertmanager2kafka
+    container_name: alertmanager2kafka
+    ports:
+      - 9097:9097
+    environment:
+      - KAFKA_HOST=${KAFKA_ENDPOINT}
+      - KAFKA_TOPIC=${KAFKA_ALERT_TOPIC}
+    #  - SERVER_BIND=${SERVER_BIND}
+    command:
+      - 'alertmanager2kafka --kafka.host=${KAFKA_HOST} --kafka.topic=${KAFKA_TOPIC} --bind=:9097 --verbose'
   cadvisor:
     image: gcr.io/cadvisor/cadvisor
     hostname: cadvisor
@@ -49,6 +61,7 @@ services:
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
       KAFKA_ADVERTISED_PORT: 9092
       KAFKA_LOG_DIRS: "/tmp/kafka-logs"
+      KAFKA_CREATE_TOPICS: 'alerts:1:1'
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     depends_on:
