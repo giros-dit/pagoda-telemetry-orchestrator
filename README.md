@@ -53,13 +53,13 @@ Para detener el servicio, ejecute lo siguiente:
 docker-compose -f docker-compose-nifi-central.yml down
 ```
 
-> **IMPORTANT NOTE:**
+> **NOTA IMPORTANTE:**
 >
 > En el archivo `.env` se definen y parametrizan múltiples variables de entorno que toman los microservicios definidos en los diferentes docker-compose (p.ej., para definir el endpoint de la instancia de Prometheus, el endpoint del servicio NiFi o el endpoint del broker de Kafka). Por defecto, los variables de entorno están configuradas para el despliegue del sistema de orquestación de telemetria para el nodo central de PAGODA.
 
 ## Requisitos
 
-- Docker (_probado con versión 19.03.13_)
+- Docker (_probado con versión 20.10.14_)
 - Docker-compose (_probado con la versión 1.27.4_)
 - Python 3.9
 - [Poetry](https://python-poetry.org/docs/)
