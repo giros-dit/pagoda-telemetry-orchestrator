@@ -1,11 +1,14 @@
 import logging
 
+import os
+
 import nipyapi
 
 from nipyapi.nifi.models.template_entity import TemplateEntity
 
 logger = logging.getLogger(__name__)
 
+NIFI_URI = os.getenv("NIFI_URI")
 
 class NiFiClient(object):
     """
@@ -15,7 +18,7 @@ class NiFiClient(object):
     def __init__(self,
                  username: str,
                  password: str,
-                 url: str = "https://nifi:8443/nifi-api",):
+                 url: str = str(NIFI_URI),):
 
         self.username = username
         self.password = password

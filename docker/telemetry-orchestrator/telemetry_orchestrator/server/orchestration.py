@@ -15,7 +15,7 @@ from telemetry_orchestrator.server.applications import nifi_application_configs
 logger = logging.getLogger(__name__)
 
 
-def process_metric(metric: MetricModel, metric_id: str, nifi: NiFiClient):
+def process_metric(metric: MetricModel, metric_id: str, site: str, nifi: NiFiClient):
     """
     Process Metric
     """
@@ -27,12 +27,12 @@ def process_metric(metric: MetricModel, metric_id: str, nifi: NiFiClient):
     # Renew access token for NiFi API
     nifi.login()
     arguments = nifi_application_configs[
-        "MetricSourcePagodaYANG"](metric, metric_id)
+        "MetricSourcePagodaYANG"](metric, metric_id, site)
     nifi.instantiate_flow_from_metric(
         metric, metric_id, "MetricSourcePagodaYANG", arguments)
 
 
-def reprocess_metric(metric: MetricModel, metric_id: str, nifi: NiFiClient):
+def reprocess_metric(metric: MetricModel, metric_id: str, site: str, nifi: NiFiClient):
     """
     Reprocess Metric
     """
@@ -44,7 +44,7 @@ def reprocess_metric(metric: MetricModel, metric_id: str, nifi: NiFiClient):
     # Renew access token for NiFi API
     nifi.login()
     arguments = nifi_application_configs[
-        "MetricSourcePagodaYANG"](metric, metric_id)
+        "MetricSourcePagodaYANG"](metric, metric_id, site)
     nifi.update_flow_from_metric(metric, metric_id, arguments)
 
 
@@ -74,9 +74,9 @@ def process_ue_location(ue_location: UELocationModel, ue_location_id: str,
     # Renew access token for NiFi API
     nifi.login()
     arguments = nifi_application_configs[
-        "NDACSource"](ue_location, ue_location_id)
+        "NDACLocationSource"](ue_location, ue_location_id)
     nifi.instantiate_flow_from_ue_location(
-        ue_location, ue_location_id, "NDACSource", arguments)
+        ue_location, ue_location_id, "NDACLocationSource", arguments)
 
 
 def reprocess_ue_location(ue_location: UELocationModel, ue_location_id: str, 
@@ -91,7 +91,7 @@ def reprocess_ue_location(ue_location: UELocationModel, ue_location_id: str,
     # Renew access token for NiFi API
     nifi.login()
     arguments = nifi_application_configs[
-        "NDACSource"](ue_location, ue_location_id)
+        "NDACLocationSource"](ue_location, ue_location_id)
     nifi.update_flow_from_ue_location(ue_location, ue_location_id, arguments)
 
 

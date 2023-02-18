@@ -1,0 +1,21 @@
+version: '3'
+services:
+  nifi:
+    build:
+      context: .
+      dockerfile: ./docker/nifi-mec1/Dockerfile
+    hostname: nifi-mec1
+    container_name: nifi-mec1
+    user: root
+    environment:
+      NIFI_WEB_HTTPS_PORT: ${NIFI_WEB_HTTPS_PORT}
+      NIFI_WEB_PROXY_HOST: ${NIFI_WEB_PROXY_HOST}
+      SINGLE_USER_CREDENTIALS_USERNAME: ${NIFI_USERNAME}
+      # Must be of 12 characters min
+      SINGLE_USER_CREDENTIALS_PASSWORD: ${NIFI_PASSWORD}
+      NIFI_JVM_HEAP_INIT: 512m
+      NIFI_JVM_HEAP_MAX: 1g
+    ports:
+      - "8443:8443"
+    volumes:
+      - ./docker/nifi-mec1/drivers/nars:/opt/nifi/nifi-current/extensions

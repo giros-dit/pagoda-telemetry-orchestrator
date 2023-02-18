@@ -1,0 +1,176 @@
+INPUT
+
+{
+    "status": {
+        "status_code": "SUCCESS",
+        "status_description": {
+            "description_code": "NOT_SPECIFIED",
+            "description": "SuccessFully fetch of Iccid response"
+        }
+    },
+    "email_id": "api_murcia@vodafone.com",
+    "subsc": [
+        {
+            "imsi": "999400000407032",
+            "imsi_alias": "8900099200000470329",
+            "icc_id": "8900099200000470329",
+            "imei": "",
+            "static_ip": "",
+            "qos": "QCI6",
+            "apn_id": "apn:5bd39143-7350-4fea-464e-f8c847d8f55d",
+            "apn_name": "PDN-1",
+            "qos_group_id": "DEFAULTQOS:2acad255-5639-41f6-76e9-6d31d0257b3b",
+            "qos_profile_name": "PDN-1_HIGH",
+            "private_network_details": [
+                {
+                    "nhg_id": "4dfe945e-3795-44b5-7250-6302076fc3e0",
+                    "status": "ACTIVE",
+                    "status_description": "",
+                    "ue_status": "UE_CONNECTED",
+                    "ue_ip": "",
+                    "ue_report_timestamp": "2023-01-24T15:26:24.131Z",
+                    "nhg_alias": "Murcia",
+                    "feature_status": null
+                }
+            ],
+            "last_known_access_point": {
+                "access_point_hw_id": "DH220749096::NOKIA::ASIB",
+                "ue_report_timestamp": "2023-01-24T16:05:24.136Z"
+            }
+        },
+        {
+            "imsi": "999400000407099",
+            "imsi_alias": "",
+            "icc_id": "8900099200000470998",
+            "imei": "",
+            "static_ip": "",
+            "qos": "QCI6",
+            "apn_id": "apn:5bd39143-7350-4fea-464e-f8c847d8f55d",
+            "apn_name": "PDN-1",
+            "qos_group_id": "DEFAULTQOS:2acad255-5639-41f6-76e9-6d31d0257b3b",
+            "qos_profile_name": "PDN-1_HIGH",
+            "private_network_details": [
+                {
+                    "nhg_id": "4dfe945e-3795-44b5-7250-6302076fc3e0",
+                    "status": "ACTIVE",
+                    "status_description": "",
+                    "ue_status": "UE_CONNECTED",
+                    "ue_ip": "",
+                    "ue_report_timestamp": "2023-01-24T14:49:24.114Z",
+                    "nhg_alias": "Murcia",
+                    "feature_status": null
+                }
+            ],
+            "last_known_access_point": {
+                "access_point_hw_id": "DH220749088::NOKIA::ASIB",
+                "ue_report_timestamp": "2023-01-24T15:55:24.127Z"
+            }
+        },
+        {
+            "imsi": "999400000407001",
+            "imsi_alias": "999400000407001",
+            "icc_id": "8900099200000470014",
+            "imei": "",
+            "static_ip": "",
+            "qos": "QCI9",
+            "apn_id": "apn:5bd39143-7350-4fea-464e-f8c847d8f55d",
+            "apn_name": "PDN-1",
+            "qos_group_id": "DEFAULTQOS:2acad255-5639-41f6-76e9-6d31d0257b3b",
+            "qos_profile_name": "PDN-1_DEFAULT",
+            "private_network_details": [
+                {
+                    "nhg_id": "4dfe945e-3795-44b5-7250-6302076fc3e0",
+                    "status": "ACTIVE",
+                    "status_description": "",
+                    "ue_status": "UE_CONNECTED",
+                    "ue_ip": "",
+                    "ue_report_timestamp": "2023-01-24T15:14:24.135Z",
+                    "nhg_alias": "Murcia",
+                    "feature_status": null
+                }
+            ],
+            "last_known_access_point": {
+                "access_point_hw_id": "DH220749088::NOKIA::ASIB",
+                "ue_report_timestamp": "2023-01-24T15:14:24.135Z"
+            }
+        }      
+    ],
+    "fail_icc_id": []
+}
+
+JOLT
+
+[{
+	"operation": "shift",
+	"spec": {
+		"status": {
+			"status_code": {
+				"SUCCESS": {
+					"@(3,subsc)": {
+						"*": {
+							"private_network_details": {
+								"*": {
+									"ue_status": {
+										"UE_CONNECTED": {
+											"@(2,ue_ip)": "icc_infos.@(5,icc_id).ue_ip",
+											"@(4,imsi)": "icc_infos.@(5,icc_id).imsi",
+											"@(4,imei)": "icc_infos.@(5,icc_id).imei",
+											"@(4,apn_id)": "icc_infos.@(5,icc_id).apn_id",
+											"@(4,last_known_access_point)": {
+												"access_point_hw_id": {
+                                                    "@(1,access_point_hw_id)": "icc_infos.@(7,icc_id).access_point_hw_id",
+                                                    "@(1,ue_report_timestamp)": "icc_infos.@(7,icc_id).ue_report_timestamp",
+													"DH220749096::NOKIA::ASIB": {
+														"#PLEIADES": "icc_infos.@(8,icc_id).access_point_name"
+													},
+													"DH220749088::NOKIA::ASIB": {
+														"#ECONOMICAS": "icc_infos.@(8,icc_id).access_point_name"
+													}
+												}
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+}]
+
+
+OUTPUT
+
+{
+	"icc_infos": {
+		"8900099200000470329": {
+			"ue_ip": "",
+			"imsi": "999400000407032",
+			"imei": "",
+			"apn_id": "apn:5bd39143-7350-4fea-464e-f8c847d8f55d",
+			"access_point_hw_id": "DH220749096::NOKIA::ASIB",
+			"ue_report_timestamp": "2023-01-24T16:05:24.136Z",
+			"access_point_name": "PLEIADES"
+		},
+		"8900099200000470998": {
+			"ue_ip": "",
+			"imsi": "999400000407099",
+			"imei": "",
+			"apn_id": "apn:5bd39143-7350-4fea-464e-f8c847d8f55d",
+			"access_point_hw_id": "DH220749088::NOKIA::ASIB",
+			"ue_report_timestamp": "2023-01-24T15:55:24.127Z",
+			"access_point_name": "ECONOMICAS"
+		},
+		"8900099200000470014": {
+			"ue_ip": "",
+			"imsi": "999400000407001",
+			"imei": "",
+			"apn_id": "apn:5bd39143-7350-4fea-464e-f8c847d8f55d",
+			"access_point_hw_id": "DH220749088::NOKIA::ASIB",
+			"ue_report_timestamp": "2023-01-24T15:14:24.135Z",
+			"access_point_name": "ECONOMICAS"
+		}
+	}
+}

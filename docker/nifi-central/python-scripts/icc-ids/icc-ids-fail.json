@@ -1,0 +1,12 @@
+{
+  "status" : {
+    "status_code" : "SUCCESS",
+    "status_description" : {
+      "description_code" : "NOT_SPECIFIED",
+      "description" : "SuccessFully fetch of Iccid response"
+    }
+  },
+  "email_id" : "api_murcia@vodafone.com",
+  "subsc" : [ ],
+  "fail_icc_id" : [ ]
+}

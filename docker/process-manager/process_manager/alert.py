@@ -25,27 +25,9 @@ from process_manager.models.alerts import (
     DeleteAlertResponseModel
 )
 
-from process_manager.nificlient import NiFiClient
-
 router = APIRouter()
 
 logger = logging.getLogger(__name__)
-
-
-# NiFi
-NIFI_URI = os.getenv("NIFI_URI", "https://nifi:8443/nifi-api")
-NIFI_USERNAME = os.getenv("NIFI_USERNAME")
-NIFI_PASSWORD = os.getenv("NIFI_PASSWORD")
-
-# Prometheus
-PROMETHEUS_URI = os.getenv("PROMETHEUS_URI")
-
-
-# Init NiFi REST API Client
-nifi = NiFiClient(username=NIFI_USERNAME,
-                  password=NIFI_PASSWORD,
-                  url=NIFI_URI)
-
 
 @router.post("", response_description="Alert added into the database", 
              response_model=AddAlertResponseModel)

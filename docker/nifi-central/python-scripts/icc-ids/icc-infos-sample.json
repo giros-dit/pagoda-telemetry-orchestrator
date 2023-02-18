@@ -1,0 +1,14 @@
+{
+  "icc_infos": {
+    "8900099200000470329": {
+      "access_point_hw_id": "DH220749096::NOKIA::ASIB",
+      "access_point_name": "PLEIADES",
+      "apn_id": "apn:5bd39143-7350-4fea-464e-f8c847d8f55d",
+      "imei": "",
+      "imsi": "999400000407032",
+      "ue_ip": "",
+      "ue_report_timestamp": "2023-02-01T16:15:24.113Z"
+    }
+  },
+  "mobility_detection_time": "2023-02-10T15:35:08.126603+01:00"
+}

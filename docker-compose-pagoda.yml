@@ -1,0 +1,200 @@
+version: '3'
+services:
+  alertmanager:
+    image: prom/alertmanager
+    hostname: alertmanager
+    container_name: alertmanager
+    ports:
+      - 9093:9093
+    volumes:
+      - ./docker/alertmanager/:/etc/alertmanager/
+    command:
+      - '--config.file=/etc/alertmanager/config.yml'
+      - '--storage.path=/alertmanager'
+  alertmanager2kafka:
+    image: genunix/alertmanager2kafka
+    hostname: alertmanager2kafka
+    container_name: alertmanager2kafka
+    ports:
+      - 9097:9097
+    environment:
+      - KAFKA_HOST=${KAFKA_ENDPOINT}
+      - KAFKA_TOPIC=${KAFKA_ALERT_TOPIC}
+    #  - SERVER_BIND=${SERVER_BIND}
+    command:
+      - 'alertmanager2kafka --kafka.host=${KAFKA_HOST} --kafka.topic=${KAFKA_TOPIC} --bind=:9097 --verbose'
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor
+    hostname: cadvisor
+    container_name: cadvisor
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:rw
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+    ports:
+      - 8081:8080
+  grafana:
+    image: grafana/grafana
+    hostname: grafana
+    container_name: grafana
+    user: root
+    ports:
+      - 3001:3000
+    environment:
+      - GF_SECURITY_ADMIN_USER=${GF_USER}
+      - GF_SECURITY_ADMIN_PASSWORD=${GF_PASSWORD}
+      - GF_USERS_ALLOW_SIGN_UP=${GF_USERS_ALLOW_SIGN_UP}
+    volumes:
+    #  - ./docker/grafana/grafana_data:/var/lib/grafana
+      - ./docker/grafana/provisioning:/etc/grafana/provisioning
+    depends_on:
+      - prometheus
+  kafka:
+    image: wurstmeister/kafka:latest
+    hostname: kafka
+    container_name: kafka
+    ports:
+      - "9092:9092"
+      - "9094:9094"
+    environment:
+      KAFKA_ADVERTISED_HOST_NAME: kafka
+      HOSTNAME_COMMAND: curl http://169.254.169.254/latest/meta-data/local-ipv4
+      KAFKA_ADVERTISED_LISTENERS: INSIDE://kafka:9092,OUTSIDE://_{HOSTNAME_COMMAND}:9094
+      KAFKA_LISTENERS: INSIDE://:9092,OUTSIDE://:9094
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INSIDE:PLAINTEXT,OUTSIDE:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: INSIDE
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LOG_DIRS: "/tmp/kafka-logs"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    depends_on:
+      - zookeeper
+    logging:
+      driver: none
+  mongo-db:
+    image: mongo:latest
+    hostname: mongo-db
+    container_name: mongo-db
+#    environment:
+#      MONGO_INITDB_ROOT_USERNAME: ${MONGO_USERNAME}
+#      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD}
+    ports:
+      - "27017:27017"
+    command: --nojournal
+  node-exporter:
+    image: prom/node-exporter
+    hostname: node-exporter
+    container_name: node-exporter
+    ports:
+      - "9101:9100"
+    restart: unless-stopped
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.rootfs=/rootfs'
+     # - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+      - '--path.sysfs=/host/sys'
+      - '--collector.filesystem.ignored-mount-points=^/(sys|proc|dev|host|etc)($$|/)'
+    depends_on:
+      - prometheus
+  node_exporter:
+    image: quay.io/prometheus/node-exporter:latest
+    hostname: node_exporter
+    container_name: node_exporter
+    command:
+      - '--path.rootfs=/host'
+    network_mode: host
+    pid: host
+    restart: unless-stopped
+    volumes:
+      - '/:/host:ro,rslave'
+    depends_on:
+      - prometheus
+  process-manager:
+    build:
+      context: .
+      dockerfile: ./docker/process-manager/Dockerfile
+    hostname: process-manager
+    container_name: process-manager
+    environment:
+      - PROCESS_MANAGER_URI=${PROCESS_MANAGER_URI}
+      - NIFI_URI=${NIFI_URI}
+      - NIFI_USERNAME=${NIFI_USERNAME}
+      - NIFI_PASSWORD=${NIFI_PASSWORD}
+      - MONGO_URL=${MONGO_URL}
+    ports:
+      - "8082:8080"
+    volumes:
+      - ./docker/process-manager/process_manager:/opt/process-manager/process_manager
+      - ./docker/prometheus/config/prometheus-rules:/opt/process-manager/process_manager/prometheus-rules
+  prometheus:
+    image: prom/prometheus
+    hostname: prometheus
+    container_name: prometheus
+    ports:
+      - "9099:9090"
+    networks:
+      - monitor-net
+      - default
+    extra_hosts:
+      - "host.docker.internal: 172.23.5.254"
+    volumes:
+      - ./docker/prometheus/config/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./docker/prometheus/config/prometheus-rules:/etc/prometheus/prometheus-rules
+  pushgateway:
+    image: prom/pushgateway
+    hostname: pushgateway
+    container_name: pushgateway
+    ports:
+      - "9091:9091"
+  pushgateway-tester:
+    build:
+      context: .
+      dockerfile: ./docker/pushgateway-tester/Dockerfile
+    hostname: pushgateway-tester
+    container_name: pushgateway-tester
+  telemetry-orchestrator:
+    build:
+      context: .
+      dockerfile: ./docker/telemetry-orchestrator/Dockerfile
+    hostname: telemetry-orchestrator
+    container_name: telemetry-orchestrator
+    environment:
+      - NIFI_URI=${NIFI_URI}
+      - NIFI_USERNAME=${NIFI_USERNAME}
+      - NIFI_PASSWORD=${NIFI_PASSWORD}
+      - TELEMETRY_ORCHESTRATOR_URI=${TELEMETRY_ORCHESTRATOR_URI}
+      - MONGO_URL=${MONGO_URL}
+      - PROMETHEUS_URI=${PROMETHEUS_URI}
+      - PROMETHEUS_RQST_PASS=${PROMETHEUS_RQST_PASS}
+      - PROMETHEUS_CERT_PASS=${PROMETHEUS_CERT_PASS}
+      - NDAC_URI_GET=${NDAC_URI_GET}
+      - NDAC_URI_POST=${NDAC_URI_POST}
+      - KAFKA_ENDPOINT=${KAFKA_ENDPOINT}
+      - TOKEN_RENEW_INTERVAL=${TOKEN_RENEW_INTERVAL}
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./docker/telemetry-orchestrator/telemetry_orchestrator:/opt/telemetry-orchestrator/telemetry_orchestrator
+  zookeeper:
+    image: zookeeper
+    hostname: zookeeper
+    container_name: zookeeper
+    ports:
+      - "2181"
+    logging:
+      driver: none
+
+networks:
+  monitor-net:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.23.0.0/16
+          ip_range: 172.23.5.0/24
+          gateway: 172.23.5.254

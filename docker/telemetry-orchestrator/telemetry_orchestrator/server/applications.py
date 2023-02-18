@@ -17,9 +17,15 @@ logger = logging.getLogger(__name__)
 
 PROMETHEUS_URI = os.getenv("PROMETHEUS_URI")
 
+PROMETHEUS_RQST_PASS = os.getenv("PROMETHEUS_RQST_PASS")
+
+PROMETHEUS_CERT_PASS = os.getenv("PROMETHEUS_CERT_PASS")
+
 NDAC_URI_GET = os.getenv("NDAC_URI_GET")
 
 NDAC_URI_POST = os.getenv("NDAC_URI_POST")
+
+TOKEN_RENEW_INTERVAL = os.getenv("TOKEN_RENEW_INTERVAL")
 
 KAFKA_ENDPOINT = os.getenv("KAFKA_ENDPOINT")
 
@@ -33,15 +39,30 @@ def _getQueryLabels(expression: dict) -> str:
     """
     labels = []
     for label, value in expression.items():
-        labels.append("{0}='{1}'".format(label, value))
+        if value.startswith("~"):
+            labels.append("{0}=~'{1}'".format(label, value.replace('~','')))
+        else:
+            labels.append("{0}='{1}'".format(label, value))
 
     return ",".join(labels)
+
+
+def _getInstanceLabelValue(expression: dict) -> str:
+    """
+    Get Metric label value for Instance label.
+    """
+    instance_label_value = ""
+    for label, value in expression.items():
+        if label == "instance" and value.startswith("~") == False:
+            instance_label_value = value
+
+    return instance_label_value
 
 
 def _parseOperationSyntax(operation: str) -> str:
     """
     Parse syntax of the delimiter of a Prometheus operation when any condition 
-    of a label has an empty value. (e.g., {image!=""} -> {image!=\"\"})
+    of a label has an empty value. (e.g., {instance!=""} -> {instance!=\"\"})
     """
     new_operation = ""
     for index in range(len(operation)):
@@ -55,7 +76,7 @@ def _parseOperationSyntax(operation: str) -> str:
     return new_operation
 
 
-def config_metric_source(metric: MetricModel, metric_id: str) -> dict:
+def config_metric_source(metric: MetricModel, metric_id: str, site: str) -> dict:
     """
     Builds configuration arguments for MetricSource application (NiFi)
     """
@@ -99,11 +120,11 @@ def config_metric_source(metric: MetricModel, metric_id: str) -> dict:
             prometheus_request = (source_prom_endpoint + "?query=" + source_metric)        
 
     # DEPRECATED:
-    # Generation of topic ID from the hash composed of the metric along with 
+    # Generation of topic ID from the hash composed of the metric along with
     # its own tags
     # raw_topic_id = metric.metricname+labels
     # topic_id = hashlib.md5(raw_topic_id.encode("utf-8")).hexdigest()
-    
+
     # Topic ID = Metric's Object ID within MongoDB
     topic_id = metric_id 
 
@@ -111,18 +132,79 @@ def config_metric_source(metric: MetricModel, metric_id: str) -> dict:
     # Sink Kafka topic
     #sink_topic_name = str(SITE_ID)+"-"+metric.metricname+"-"+topic_id
     if metric.operation:
-        sink_topic_name = metric.site+"-"+metric.operation.split(" ")[0]+"-"+metric.metricname+"-"+topic_id
+        if metric.labels:
+            instance_label_value = _getInstanceLabelValue(metric.labels)
+            if instance_label_value == "":
+                sink_topic_name = metric.site+"-"+metric.operation.split(" ")[0]+"-"+metric.metricname+"-"+topic_id
+            else:
+                sink_topic_name = metric.site+"-"+metric.operation.split(" ")[0]+"-"+metric.metricname+"-"+instance_label_value+"-"+topic_id
+        else:
+            sink_topic_name = metric.site+"-"+metric.operation.split(" ")[0]+"-"+metric.metricname+"-"+topic_id
     else:
-        sink_topic_name = metric.site+"-"+metric.metricname+"-"+topic_id
+        if metric.labels:
+            instance_label_value = _getInstanceLabelValue(metric.labels)
+            if instance_label_value == "":
+                sink_topic_name = metric.site+"-"+metric.metricname+"-"+topic_id
+            else:
+                sink_topic_name = metric.site+"-"+metric.metricname+"-"+instance_label_value+"-"+topic_id
+        else:
+            sink_topic_name = metric.site+"-"+metric.metricname+"-"+topic_id
 
     # Endpoint for sink Kafka broker
     sink_broker_url = str(KAFKA_ENDPOINT)
+
+    request_password = str(PROMETHEUS_RQST_PASS)
+    cert_password = str(PROMETHEUS_CERT_PASS)
 
     arguments = {
         "interval": metric.interval,
         "prometheus_request": prometheus_request,
         "sink_broker_url": sink_broker_url,
-        "sink_topic": sink_topic_name
+        "sink_topic": sink_topic_name,
+        "request_password": request_password,
+        "cert_password": cert_password
+    }
+    return arguments
+
+
+def config_ue_ndac_location_source(ue_location: UELocationModel, 
+                              ue_location_id: str) -> dict:
+    """
+    Builds configuration arguments for NDACLocationSource application (NiFi)
+    """
+
+    # Get source NDAC endpoints
+    source_ndac_get_endpoint = str(NDAC_URI_GET) 
+    source_ndac_post_endpoint = str(NDAC_URI_POST)        
+
+    # DEPRECATED:
+    # Generation of topic ID from the hash composed of the metric along with 
+    # its own tags
+    # raw_topic_id = metric.metricname+labels
+    # topic_id = hashlib.md5(raw_topic_id.encode("utf-8")).hexdigest()
+    
+    # Topic ID = Metric's Object ID within MongoDB
+    topic_id = ue_location_id 
+
+    # Collect variables for MetricSource
+    # Sink Kafka topics
+    topic_icc_ids = "icc-ids"+"-"+topic_id
+    topic_icc_info = "icc-infos"+"-"+topic_id
+
+    # Endpoint for sink Kafka broker
+    sink_broker_url = str(KAFKA_ENDPOINT)
+
+    # Interval to renew token
+    cred_interval= str(TOKEN_RENEW_INTERVAL)
+
+    arguments = {
+        "cred_interval": cred_interval,
+        "poll_interval": ue_location.interval,
+        "ndac_get_url": source_ndac_get_endpoint,
+        "ndac_post_url": source_ndac_post_endpoint,
+        "sink_broker_url": sink_broker_url,
+        "topic_icc_ids": topic_icc_ids,
+        "topic_icc_info": topic_icc_info
     }
     return arguments
 
@@ -149,7 +231,7 @@ def config_ue_location_source(ue_location: UELocationModel,
     # Collect variables for MetricSource
     # Sink Kafka topics
     topic_icc_ids = "icc-ids"+"-"+topic_id
-    topic_icc_info = "icc-info"+"-"+topic_id
+    topic_icc_info = "icc-infos"+"-"+topic_id
 
     # Endpoint for sink Kafka broker
     sink_broker_url = str(KAFKA_ENDPOINT)
@@ -185,7 +267,7 @@ def config_ue_location_simple_source(ue_location: UELocationModel,
 
     # Collect variables for MetricSource
     # Sink Kafka topics
-    topic_icc_info = "icc-info"+"-"+topic_id
+    topic_icc_info = "icc-infos"+"-"+topic_id
 
     # Endpoint for sink Kafka broker
     sink_broker_url = str(KAFKA_ENDPOINT)
@@ -204,5 +286,6 @@ nifi_application_configs = {
     "MetricSourceYANG": config_metric_source,
     "MetricSourcePagodaYANG": config_metric_source,
     "NDACSource": config_ue_location_source,
-    "NDACSourceSimple": config_ue_location_simple_source
+    "NDACSourceSimple": config_ue_location_simple_source,
+    "NDACLocationSource": config_ue_ndac_location_source
 }

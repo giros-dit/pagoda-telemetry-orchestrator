@@ -1,6 +1,7 @@
 import logging
 import time
 import hashlib
+import os
 from random import randrange
 from typing import List
 
@@ -25,6 +26,8 @@ logger = logging.getLogger(__name__)
 
 EXPORTER_SERVICE_PG_NAME = "exporter-service"
 
+NIFI_URI = os.getenv("NIFI_URI")
+
 
 class NiFiClient(object):
     """
@@ -34,7 +37,7 @@ class NiFiClient(object):
     def __init__(self,
                  username: str,
                  password: str,
-                 url: str = "https://nifi:8443/nifi-api",):
+                 url: str = str(NIFI_URI)):
 
         self.username = username
         self.password = password
@@ -74,7 +77,10 @@ class NiFiClient(object):
         """
         param_entities = []
         for key, value in params.items():
-            param = nifi_params.prepare_parameter(key, value)
+            if key == "request_password" or key == "cert_password":
+                param = nifi_params.prepare_parameter(key, value, sensitive=True)
+            else:
+                param = nifi_params.prepare_parameter(key, value)
             param_entities.append(param)
         return param_entities
 
@@ -86,6 +92,8 @@ class NiFiClient(object):
         The context is assigned to the specified process group (by ID).
         """
         param_entities = self.prepare_parameters_for_context(params)
+        logger.info("Get parameter list %s" % param_entities)
+        logger.info("Get PG ID %s" % pg.id)
         context = nifi_params.create_parameter_context(
             pg.id, parameters=param_entities)
         nifi_params.assign_context_to_process_group(pg, context.id)
@@ -376,6 +384,20 @@ class NiFiClient(object):
             metric_pg.id,
             metric_template.id,
             -250, 200)
+
+        http_processor = None
+        for processor in metric_pg_flow.flow.processors:
+            if "Polling" in processor.status.name:
+                http_processor = processor
+                processor_properties = processor.component.config.properties
+                logger.info("'{0}' NiFi processor properties.".format(processor_properties))
+                if 'Basic Authentication Password' in processor_properties:
+                    processor_properties['Basic Authentication Password'] = args['request_password']
+                    logger.info("'{0}' NiFi processor properties.".format(processor_properties))
+                    #time.sleep(1)
+                    nipyapi.canvas.update_processor(processor=http_processor, update=nipyapi.nifi.ProcessorConfigDTO(properties=processor_properties))
+                    #time.sleep(1)
+
         # Enable controller services (if any)
         controllers = nipyapi.canvas.list_all_controllers(metric_pg.id, False)
         if controllers:
@@ -386,7 +408,16 @@ class NiFiClient(object):
                     "Enabling controller %s ..."
                     % controller.component.name)
                 if controller.status.run_status != 'ENABLED':
-                    nipyapi.canvas.schedule_controller(controller, True)
+                    properties = controller.component.properties
+                    logger.info("'{0}' NiFi controller properties.".format(properties))
+                    if 'Truststore Password' in properties:
+                        properties['Truststore Password'] = args['cert_password']
+                        logger.info("'{0}' NiFi controller properties.".format(properties))
+                        #time.sleep(1)
+                        nipyapi.canvas.update_controller(controller=controller, update=nipyapi.nifi.ControllerServiceDTO(properties=properties))
+                        #time.sleep(1)
+                    nipyapi.canvas.schedule_controller(controller=controller, scheduled=True, refresh=True)
+        
         # Hack to support scheduling for a given processor
         if "interval" in args:
             self.set_polling_interval(metric_pg_flow, args["interval"])
@@ -412,7 +443,7 @@ class NiFiClient(object):
         ue_location_pg = nipyapi.canvas.create_process_group(
             root_pg, pg_name, location
         )
-        logger.info("CHACHO PG id %s" % ue_location_pg.id)
+        logger.info("Get PG id %s" % ue_location_pg.id)
         logger.debug("Deploy with arguments %s" % args)
         # Set Parameter Context for UELocation PG
         self.set_parameter_context(ue_location_pg, args)
@@ -424,6 +455,37 @@ class NiFiClient(object):
             ue_location_pg.id,
             ue_location_template.id,
             -250, 200)
+
+        # Set Parameter Context and enable controller services (if any) for all derived Process Grups
+        process_groups = nipyapi.canvas.list_all_process_groups(ue_location_pg.id)
+        if process_groups:
+            logger.info("Get process groups list length %s" % len(process_groups))
+            for process_group in process_groups:
+                if process_group.id != ue_location_pg.id or process_group.id == ue_location_pg.id:
+                    logger.info("Get process group id %s" % process_group.id)
+                    if process_group.id != ue_location_pg.id:
+                        self.set_parameter_context(process_group, args)
+                    process_group_entity = nipyapi.canvas.get_flow(process_group.id)
+                    
+                    # Hack to support scheduling for a given processor
+                    if "cred_interval" in args and "poll_interval" in args:
+                        logger.info("Get cred_interval arg %s" % args["cred_interval"])
+                        logger.info("Get poll_interval arg %s" % args["poll_interval"])
+                        self.set_credentials_interval(process_group_entity.process_group_flow, args["cred_interval"])
+                        self.set_polling_interval(process_group_entity.process_group_flow, args["poll_interval"])
+                        
+                    # Enable controller services (if any)
+                    controllers = nipyapi.canvas.list_all_controllers(process_group.id, False)
+                    if controllers:
+                        # Enable controller services
+                        # Start with the registry controller
+                        for controller in controllers:
+                            logger.debug(
+                                "Enabling controller %s ..."
+                                % controller.component.name)
+                            if controller.status.run_status != 'ENABLED':
+                                nipyapi.canvas.schedule_controller(controller, True)
+        
         # Enable controller services (if any)
         controllers = nipyapi.canvas.list_all_controllers(ue_location_pg.id, False)
         if controllers:
@@ -437,7 +499,7 @@ class NiFiClient(object):
                     nipyapi.canvas.schedule_controller(controller, True)
         # Hack to support scheduling for a given processor
         if "interval" in args:
-            logger.info("CHACHO args %s" % args["interval"])
+            logger.info("Get args %s" % args["interval"])
             self.set_polling_interval(ue_location_pg_flow, args["interval"])
 
         logger.debug("'{0}' flow deployed in NiFi.".format(pg_name))
@@ -593,19 +655,46 @@ class NiFiClient(object):
         logger.debug("Set polling interval to %s milliseconds" % interval)
         # Retrieve Polling processor
         # so far rely on "Polling" string
+        polling_processor = False
         http_ps = None
         for ps in pg_flow.flow.processors:
-            if "Polling" in ps.status.name:
+            if "PollingGetToken" in ps.status.name:
                 logger.debug("Updating %s processor" % ps.status.name)
                 http_ps = ps
+                polling_processor = True
                 break
-        # Enforce interval unit to miliseconds
-        interval_unit = "ms"
-        nipyapi.canvas.update_processor(
-            http_ps,
-            nipyapi.nifi.ProcessorConfigDTO(
-                scheduling_period='{0}{1}'.format(interval,
-                                                  interval_unit)))
+        
+        if polling_processor == True:
+            # Enforce interval unit to miliseconds
+            interval_unit = "ms"
+            nipyapi.canvas.update_processor(
+                http_ps,
+                nipyapi.nifi.ProcessorConfigDTO(
+                    scheduling_period='{0}{1}'.format(interval,
+                                                    interval_unit)))
+
+    def set_credentials_interval(self, pg_flow: ProcessGroupFlowEntity,
+                             interval: str):
+        logger.debug("Set credentials interval to %s milliseconds" % interval)
+        # Retrieve GetCredentials processor
+        # so far rely on "GetCredentials" string
+        credentials_processor = False
+        http_ps = None
+        for ps in pg_flow.flow.processors:
+            if "GetCredentials" in ps.status.name:
+                logger.debug("Updating %s processor" % ps.status.name)
+                http_ps = ps
+                credentials_processor = True
+                break
+        
+        if credentials_processor == True:
+            # Enforce interval unit to miliseconds
+            interval_unit = "ms"
+            nipyapi.canvas.update_processor(
+                http_ps,
+                nipyapi.nifi.ProcessorConfigDTO(
+                    scheduling_period='{0}{1}'.format(interval,
+                                                    interval_unit)))
 
     def upload_template(self, template_path: str) -> TemplateEntity:
         """

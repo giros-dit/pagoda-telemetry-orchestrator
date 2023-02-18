@@ -1,0 +1,38 @@
+groups:
+- name: containers
+  rules:
+  - alert: telemetry_orchestrator_down
+    expr: absent_over_time(container_memory_usage_bytes{name="telemetry-orchestrator"}[1m])
+    for: 30s
+    labels:
+      severity: critical
+    annotations:
+      summary: "Telemetry Orchestrator container down"
+      description: "NiFi container is down for more than 1 minute."
+  
+  - alert: nifi_down
+    expr: absent_over_time(container_memory_usage_bytes{name="nifi"}[1m])
+    for: 1m
+    labels:
+      severity: critical
+    annotations:
+      summary: "NiFi container down"
+      description: "NiFi container is down for more than 1 minute."
+
+  - alert: telemetry_orchestrator_high_cpu
+    expr: sum(rate(container_cpu_usage_seconds_total{image!="",name="telemetry-orchestrator"}[1m])) * 100 >= 14
+    for: 30s
+    labels:
+      severity: critical
+    annotations:
+      summary: "Telemetry Orchestrator container high CPU usage"
+      description: "Telemetry Orchestrator container CPU usage is {{ humanize $value}}%."
+
+  - alert: nifi_high_memory
+    expr: container_memory_usage_bytes{image!="",name="nifi"} > 3500000000
+    for: 30s
+    labels:
+      severity: critical
+    annotations:
+      summary: "NiFi container high memory usage"
+      description: "NiFi container memory consumption is {{ humanize $value}}."

@@ -21,9 +21,6 @@ ENV PIP_DEFAULT_TIMEOUT=100 \
 RUN pip install "poetry==$POETRY_VERSION"
 RUN python -m venv /venv
 
-# Copy semantic-tools dependency
-#RUN mkdir -p /opt/semantic-tools
-#COPY semantic-tools /opt/semantic-tools
 # Copy app artifacts
 COPY docker/${APP_NAME}/pyproject.toml docker/${APP_NAME}/poetry.lock ./
 RUN poetry export -f requirements.txt --without-hashes | /venv/bin/pip install -r /dev/stdin

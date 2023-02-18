@@ -1,0 +1,31 @@
+{
+	"icc_infos": {
+		"8900099200000470329": {
+			"access_point_hw_id": "DH220749096::NOKIA::ASIB2",
+			"ue_report_timestamp": "2023-01-24T16:05:24.136Z",
+			"ue_ip": "",
+			"imsi": "999400000407032",
+			"imei": "",
+			"apn_id": "apn:5bd39143-7350-4fea-464e-f8c847d8f55d",
+			"access_point_name": "PLEIADES"
+		},
+		"8900099200000470998": {
+			"access_point_hw_id": "DH220749088::NOKIA::ASIB",
+			"ue_report_timestamp": "2023-01-24T15:55:24.127Z",
+			"ue_ip": "",
+			"imsi": "999400000407099",
+			"imei": "",
+			"apn_id": "apn:5bd39143-7350-4fea-464e-f8c847d8f55d",
+			"access_point_name": "ECONOMICAS"
+		},
+		"8900099200000470014": {
+			"access_point_hw_id": "DH220749088::NOKIA::ASIB",
+			"ue_report_timestamp": "2023-01-24T15:14:24.135Z",
+			"ue_ip": "",
+			"imsi": "999400000407001",
+			"imei": "",
+			"apn_id": "apn:5bd39143-7350-4fea-464e-f8c847d8f55d",
+			"access_point_name": "ECONOMICAS"
+		}
+	}
+}

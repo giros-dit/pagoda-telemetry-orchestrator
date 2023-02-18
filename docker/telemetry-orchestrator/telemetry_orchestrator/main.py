@@ -12,12 +12,13 @@ logger = logging.getLogger(__name__)
 SITE_ID = os.getenv("SITE_ID")
 
 # NiFi
-NIFI_URI = os.getenv("NIFI_URI", "https://nifi:8443/nifi-api")
+NIFI_URI = os.getenv("NIFI_URI")
+#NIFI_URI = os.getenv("NIFI_URI", "https://nifi:8443/nifi-api")
 NIFI_USERNAME = os.getenv("NIFI_USERNAME")
 NIFI_PASSWORD = os.getenv("NIFI_PASSWORD")
 
 # Init NiFi REST API Client
-nifi = NiFiClient(username=NIFI_USERNAME,
+nifi= NiFiClient(username=NIFI_USERNAME,
                   password=NIFI_PASSWORD,
                   url=NIFI_URI)
 
@@ -38,8 +39,10 @@ async def startup_event():
             logger.warning("NiFi REST API not available. "
                            "Retrying after 10 seconds...")
             time.sleep(10)
+
+
     # Deploy DistributedMapCacheServer in root PG
-    # nifi.deploy_distributed_map_cache_server()
+    nifi.deploy_distributed_map_cache_server()
     # Deploy exporter-service PG in root PG
     # nifi.deploy_exporter_service()
 

@@ -8,6 +8,8 @@ import time
 import requests
 import subprocess
 
+from requests.auth import HTTPBasicAuth
+
 from telemetry_orchestrator.server.database import (
     add_metric,
     delete_metric,
@@ -41,15 +43,14 @@ logger = logging.getLogger(__name__)
 
 
 # NiFi
-NIFI_URI = os.getenv("NIFI_URI", "https://nifi:8443/nifi-api")
+NIFI_URI = os.getenv("NIFI_URI")
 NIFI_USERNAME = os.getenv("NIFI_USERNAME")
 NIFI_PASSWORD = os.getenv("NIFI_PASSWORD")
 
 # Prometheus
 PROMETHEUS_URI = os.getenv("PROMETHEUS_URI")
 
-
-# Init NiFi REST API Client
+# Init NiFi REST API Clients
 nifi = NiFiClient(username=NIFI_USERNAME,
                   password=NIFI_PASSWORD,
                   url=NIFI_URI)
@@ -81,7 +82,7 @@ def checkPrometheusEndpoint() -> bool:
     """
     prometheus_reachable = False
     try:
-        response = requests.get("{0}?query=prometheus_build_info".format(PROMETHEUS_URI))
+        response = requests.get("{0}?query=prometheus_build_info".format(PROMETHEUS_URI), auth=HTTPBasicAuth('admin', 'NN5Tf3GC2SOccsPM'), verify=False)
         response.raise_for_status()
         if response.status_code == 200:
             logger.info(
@@ -102,7 +103,10 @@ def checkPrometheusMetric(prometheus_query: str) -> bool:
     """
     prometheus_reachable = False
     try:
-        response = requests.get("{0}?{1}".format(PROMETHEUS_URI, prometheus_query))
+        logger.info(
+            "Prometheus query '{0}' exists.".format(prometheus_query)
+        )
+        response = requests.get("{0}?{1}".format(PROMETHEUS_URI, prometheus_query), auth=HTTPBasicAuth('admin', 'NN5Tf3GC2SOccsPM'), verify=False)
         response.raise_for_status()
         
         if response.status_code == 200 and len(response.json()['data']['result']) != 0:
@@ -125,7 +129,10 @@ def _getQueryLabels(expression: dict) -> str:
     """
     labels = []
     for label, value in expression.items():
-        labels.append("{0}='{1}'".format(label, value))
+        if value.startswith("~"):
+            labels.append("{0}=~'{1}'".format(label, value.replace('~','')))
+        else:
+            labels.append("{0}='{1}'".format(label, value))
 
     return ",".join(labels)
 
@@ -139,6 +146,7 @@ async def add_metric_data(site: SiteModel, metric: MetricModel = Body(...)):
     new_metric = await add_metric(metric)
     
     logger.info("New Metric '{0}'.".format(new_metric))
+    logger.info("SITE '{0}'.".format(site))
     metric_obj = MetricModel.parse_obj(new_metric)
 
     metric_name = ""
@@ -172,7 +180,7 @@ async def add_metric_data(site: SiteModel, metric: MetricModel = Body(...)):
     check_prometheus = checkPrometheusEndpoint()
     check_prometheus_metric = checkPrometheusMetric(prometheus_request)
     if new_metric and check_prometheus and check_prometheus_metric:
-        process_metric(metric_obj, new_metric['id'], nifi)
+        process_metric(metric_obj, new_metric['id'], site, nifi)
         return ResponseModel(
             data=new_metric, code=200, message="Metric added successfully.")
     else: 
@@ -220,7 +228,7 @@ async def update_metric_data(site: SiteModel, id: str, req: UpdateMetricModel = 
             new_metric = await retrieve_metric(site, id)
             logger.info("Updated Metric '{0}'.".format(new_metric))
             new_metric_obj = MetricModel.parse_obj(new_metric)
-            reprocess_metric(new_metric_obj, new_metric['id'], nifi)
+            reprocess_metric(new_metric_obj, new_metric['id'], site, nifi)
             return ResponseModel(
                 data="Metric with ID {0} updated.".format(id),
                 code=200,

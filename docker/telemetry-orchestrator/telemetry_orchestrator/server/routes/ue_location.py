@@ -38,7 +38,7 @@ router = APIRouter()
 logger = logging.getLogger(__name__)
 
 # NiFi
-NIFI_URI = os.getenv("NIFI_URI", "https://nifi:8443/nifi-api")
+NIFI_URI = os.getenv("NIFI_URI")
 NIFI_USERNAME = os.getenv("NIFI_USERNAME")
 NIFI_PASSWORD = os.getenv("NIFI_PASSWORD")
 

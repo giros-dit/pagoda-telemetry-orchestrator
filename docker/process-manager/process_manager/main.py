@@ -25,21 +25,8 @@ from process_manager.models.alerts import (
 
 logger = logging.getLogger(__name__)
 
-#with open("/opt/process-manager/process_manager/prometheus-rules/server-rules1.yml") as file:
-#    yml_obj = yaml.load(file, Loader=yaml.FullLoader)
-#    print(yml_obj)
-
-#dict_file = [{'sports' : ['soccer', 'football', 'basketball', 'cricket', 'hockey', 'table tennis']},
-#{'countries' : ['Pakistan', 'USA', 'India', 'China', 'Germany', 'France', 'Spain']}]
-
-#with open("/opt/process-manager/process_manager/prometheus-rules/example.yml", 'w') as file:
-#    yaml.dump(dict_file, file)
-
-# Process Manager
-# PROCESS_MANAGER_URI = os.getenv("PROCESS_MANAGER_URI", "http://process-manager:8080")
-
 # NiFi
-NIFI_URI = os.getenv("NIFI_URI", "https://nifi:8443/nifi-api")
+NIFI_URI = os.getenv("NIFI_URI")
 NIFI_USERNAME = os.getenv("NIFI_USERNAME")
 NIFI_PASSWORD = os.getenv("NIFI_PASSWORD")
 
