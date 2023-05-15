@@ -20,32 +20,32 @@ En este repositorio se encuentra un prototipo funcional del sistema de orquestac
 
 - En la segunda máquina virtual se despliegan la mayor parte de los servicios del sistema de orquestación de telemetría, contando con: la API del orquestador de telemetría y la base de datos mongoDB para guardar un registro de información sobre las métricas de Prometheus monitorizadas. Además, en esta máquina virtual también se despliega el servicio de Apache Kafka donde van a publicarse periódicamente los datos de telemetría monitorizados. Todos estos servicios son desplegados como microservicios Docker dentro de la máquina virtual. 
 
-Para desplegar los sericios dependientes de esta máquina virtual, execute el siguiente comando:
+Para desplegar los servicios dependientes de esta máquina virtual, execute el siguiente comando:
 
 ```bash
-docker-compose -f docker-compose-pagoda.yml up
+$ docker-compose -f docker-compose-pagoda.yml up
 ```
 
 En caso de que esté interesado en ejecutar el docker-compose en segundo plano (los registros o _logs_ de los diferentes microservicios pueden ser molestos), use el siguiente comando:
 ```bash
-docker-compose -f docker-compose-pagoda.yml up -d
+$ docker-compose -f docker-compose-pagoda.yml up -d
 ```
 
 Para detener los servicios, ejecute lo siguiente:
 ```bash
-docker-compose -f docker-compose-pagoda.yml down
+$ docker-compose -f docker-compose-pagoda.yml down
 ```
 
 - En la tercera máquina virtual se despliega el servicio de Apache NiFi para procesar las canalizaciones de datos de las métricas de Prometheus que sean monitorizadas. Este servicio también es desplegado como un microservicio Docker dentro de la máquina virtual. Inicialmente se consideró desplegar el servicio NiFi junto con el resto de servicios del sistema de orquestación de telemetría sobre la misma máquina virtual. Pero analizando las prestaciones de NiFi se comprobó que cuando se monitorizaban varias métricas de Prometheus al mismo tiempo la máquina virtual demandaba recursos de memoria RAM y de CPU elevados. Por ello, se decidió dedicar una única máquina virtual separada para el servicio de NiFi. Para el servicio de localización de usuarios, está pensado que sólo sea ejecutado desde el nodo central.
 
 Para desplegar el servicio NiFi, execute el siguiente comando (está particularizado para el servicio NiFi del nodo central):
 ```bash
-docker-compose -f docker-compose-nifi-central.yml up
+$ docker-compose -f docker-compose-nifi-central.yml up
 ```
 
 En caso de que esté interesado en ejecutar el servicio de NiFi en segundo plano (los registros o _logs_ de los diferentes microservicios pueden ser molestos), use el siguiente comando:
 ```bash
-docker-compose -f docker-compose-nifi-central.yml up -d
+$ docker-compose -f docker-compose-nifi-central.yml up -d
 ```
 
 Para detener el servicio, ejecute lo siguiente:
@@ -69,3 +69,8 @@ docker-compose -f docker-compose-nifi-central.yml down
 Para conocer con detalle la utilidad de las diferentes operaciones proporcionadas por la API del servicio `Telemetry Orchestrator` para la gestión de la telemetría basada en Prometheus, consulta la información [aquí](docs/prometheus-telemetry-openapi-recipe/README.md).
 
 Para conocer con detalle la utilidad de las diferentes operaciones proporcionadas por la API del servicio `Telemetry Orchestrator` para la localización de usuarios según la antena, consulta la información [aquí](docs/ue-location-openapi-recipe/README.md).
+
+## Licencia
+
+Este proyecto tiene licencia [Apache-2.0](https://www.apache.org/licenses/LICENSE-2.0).
+
